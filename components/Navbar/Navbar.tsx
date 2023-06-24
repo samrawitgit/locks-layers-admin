@@ -1,5 +1,4 @@
 import * as React from "react";
-import NextLink from "next/link";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 import IconButton from "@mui/material/IconButton";
@@ -10,15 +9,15 @@ import Container from "@mui/material/Container";
 import Button from "@mui/material/Button";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 
+import NextLinkComposed from "../../components/NextLink/NextLink";
+
 import { AppContext } from "@utils/containers/app.container";
 
 import StyledNavbar from "./StyledNavbar";
 
 const pages = [
   { title: "Salons", route: "/salons" },
-  { title: "Bookings", route: "/bookings" },
-  { title: "Close Salon", route: "/close-salon" },
-  { title: "Time Off", route: "/time-off" },
+  { title: "Staff", route: "/staff" },
 ];
 const settings = ["Profile", "Account", "Dashboard", "Logout"];
 
@@ -101,9 +100,9 @@ function Navbar() {
             >
               {pages.map(({ title, route }, i) => (
                 <Button
-                  component={NextLink}
+                  component={NextLinkComposed}
                   key={`nav-el-${i}`}
-                  href={route}
+                  to={route}
                   onClick={handleCloseNavMenu}
                   sx={{ md: "none", display: "block" }}
                 >
@@ -126,9 +125,9 @@ function Navbar() {
           <Box className="menu-list">
             {pages.map(({ title, route }, i) => (
               <Button
-                component={NextLink}
+                component={NextLinkComposed}
                 key={`nav-el-${i}`}
-                href={route}
+                to={route}
                 onClick={handleCloseNavMenu}
               >
                 <Typography textAlign="center">{title}</Typography>

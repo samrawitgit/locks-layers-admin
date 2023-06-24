@@ -8,7 +8,7 @@ function Staff(props) {
         <title>Locks&Layers</title>
         <meta name="description" content="Locks&Layers Staff page" />
       </Head>
-      <h1>TimeOff</h1>
+      <h1>Staff</h1>
     </div>
   );
 }

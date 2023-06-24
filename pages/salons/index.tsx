@@ -1,6 +1,5 @@
 import React from "react";
 import Head from "next/head";
-import NextLink from "next/link";
 import { useRouter } from "next/router";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -36,7 +35,6 @@ const ButtonBases = (props) => {
   const { image } = props;
   const router = useRouter();
   const onClick = () => {
-    console.log({ loc: image.title });
     router.push(`/salons/${image.title}`);
   };
   return (

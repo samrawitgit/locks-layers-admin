@@ -1,12 +1,6 @@
 import React from "react";
-import NextLink from "next/link";
 import { styled } from "@mui/material/styles";
-import { Button, ButtonBase } from "@mui/material";
-
-// TODO: use Image from nextjs
-const ButtonLink = (children) => (
-  <Button component={NextLink}>{children}</Button>
-);
+import { ButtonBase } from "@mui/material";
 
 export const ImageButton = styled(ButtonBase)(({ theme }) => ({
   position: "relative",
