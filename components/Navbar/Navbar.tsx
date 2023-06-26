@@ -17,7 +17,7 @@ import StyledNavbar from "./StyledNavbar";
 
 const pages = [
   { title: "Salons", route: "/salons" },
-  { title: "Staff", route: "/staff" },
+  { title: "Staff", route: "/time-off" },
 ];
 const settings = ["Profile", "Account", "Dashboard", "Logout"];
 

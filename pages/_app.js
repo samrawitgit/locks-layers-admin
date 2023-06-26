@@ -33,7 +33,10 @@ class ErrorBoundary extends Component {
             <h2>Oops, there is an error!</h2>
             <button
               type="button"
-              onClick={() => this.setState({ hasError: false })}
+              onClick={() => {
+                this.setState({ hasError: false });
+                window.location.reload();
+              }}
             >
               Try again?
             </button>
