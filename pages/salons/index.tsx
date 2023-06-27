@@ -1,7 +1,7 @@
 import React from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import Box from "@mui/material/Box";
+import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 
 import {
@@ -42,7 +42,7 @@ const ButtonBases = (props) => {
       onClick={onClick}
       focusRipple
       style={{
-        width: image.width,
+        width: "100%",
       }}
     >
       <ImageSrc style={{ backgroundImage: `url(${image.url})` }} />
@@ -58,6 +58,7 @@ const ButtonBases = (props) => {
             pt: 2,
             pb: (theme) => `calc(${theme.spacing(1)} + 6px)`,
             textTransform: "capitalize",
+            fontSize: "1.5rem",
           }}
         >
           {image.title}
@@ -70,28 +71,26 @@ const ButtonBases = (props) => {
 
 function Salons(props) {
   return (
-    <div>
+    <>
       <Head>
         <title>Locks&Layers</title>
         <meta name="description" content="Locks&Layers locations" />
       </Head>
-      <Typography variant="h2" sx={{ mt: 2 }}>
-        Salons
-      </Typography>
-      <Box
+      <Grid
+        container
+        spacing={0}
+        alignItems="center"
         sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          minWidth: 300,
-          width: "100%",
-          mt: 4,
+          height: "calc(100vh - 100px)",
         }}
       >
         {images.map((image, i) => (
-          <ButtonBases key={`loc-el-${i}`} image={image} />
+          <Grid item xs={4} key={`loc-el-${i}`}>
+            <ButtonBases image={image} />
+          </Grid>
         ))}
-      </Box>
-    </div>
+      </Grid>
+    </>
   );
 }
 
