@@ -4,6 +4,8 @@ import { AppStore } from "@utils/containers/app.container";
 import { PopUpContainer } from "@utils/containers/pop-up.container";
 import Layout from "@components/layout";
 import ErrorComponent from "@components/ErrorComponent/ErrorComponent";
+import { RouteGuard } from "@components/RouteGuard";
+// import { SessionProvider } from "next-auth/react";
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -57,7 +59,11 @@ function MyApp({ Component, pageProps }) {
           <PopUpContainer>
             {/* <ErrorComponent /> */}
             {/*error={this.state.error} onHandle={this.errorHandler}*/}
-            <Component {...pageProps} />
+            {/* <SessionProvider session={session}> */}
+            <RouteGuard>
+              <Component {...pageProps} />
+            </RouteGuard>
+            {/* </SessionProvider> */}
           </PopUpContainer>
         </ErrorBoundary>
       </Layout>
