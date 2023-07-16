@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useContext, useState } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import {
@@ -13,22 +13,73 @@ import dayjs, { Dayjs } from "dayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-
-const locations = [{ label: "torino" }, { label: "milano" }, { label: "roma" }];
+import { AppContext } from "@utils/containers/app.container";
+import { useHttpClient } from "@utils/hooks/httpClient";
+import { PopUpContext } from "@utils/containers/pop-up.container";
 
 function CloseSalon(props) {
   const router = useRouter();
-  const query = router.query;
-  console.log({ query, router });
+  const { locations } = useContext(AppContext);
+  const { sendRequest } = useHttpClient();
+  const { showPopUp } = useContext(PopUpContext);
+
+  const [salon, setSalon] = useState(null);
+  const [formError, setFormError] = useState({
+    salon: false,
+    startDate: false,
+    endDate: false,
+  });
+  const today = dayjs();
+
+  const location = useMemo(() => {
+    const selLocation = locations.find(
+      (loc) => loc.city.toLowerCase() == router.query.loc
+    );
+    if (selLocation) setSalon(selLocation.city);
+    return selLocation;
+  }, [locations, router]);
+
   const [startDate, setStartDate] = React.useState<Dayjs | null>(
-    dayjs("2022-04-17")
+    today.add(1, "day")
   );
   const [endDate, setEndDate] = React.useState<Dayjs | null>(
-    dayjs("2022-04-17")
+    today.add(2, "day")
   );
 
-  const onSubmit = () => {
+  const onSubmit = async () => {
     console.log("submit!");
+    if (!salon || !startDate || !endDate) {
+      setFormError({
+        salon: !Boolean(salon),
+        startDate: !Boolean(startDate),
+        endDate: !Boolean(endDate),
+      });
+      return;
+    }
+    const closeLocRes = await sendRequest(
+      "http://localhost:8080/admin/close-location",
+      "POST",
+      {
+        locationId: location.id_location,
+        start_date: startDate
+          .set("hour", 9)
+          .set("minute", 0)
+          .set("second", 0)
+          .format("YYYY-MM-DD HH:mm:ss"),
+        end_date: endDate
+          .set("hour", 18)
+          .set("minute", 0)
+          .set("second", 0)
+          .format("YYYY-MM-DD HH:mm:ss"),
+      },
+      {
+        "Content-Type": "application/json",
+      }
+    );
+    // console.log({ closeLocRes });
+    if (closeLocRes.error) {
+      showPopUp({ title: "Error", content: closeLocRes.message });
+    }
   };
 
   return (
@@ -62,9 +113,22 @@ function CloseSalon(props) {
           <Autocomplete
             disablePortal
             id="combo-box-demo"
-            options={locations}
-            renderInput={(params) => <TextField {...params} label="Salon" />}
+            options={locations.map((loc) => loc.city)}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Salon"
+                required
+                error={formError.salon}
+              />
+            )}
             sx={{ width: 400 }}
+            defaultValue={location ? location.city : null}
+            value={salon}
+            onChange={(event, newValue) => {
+              setFormError((prev) => ({ ...prev, salon: false }));
+              setSalon(newValue);
+            }}
           />
           <TextField
             id="outlined-multiline-flexible"
@@ -75,14 +139,18 @@ function CloseSalon(props) {
           />
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
-              label="Start date"
+              label="Start date *"
               value={startDate}
               onChange={(newValue) => setStartDate(newValue)}
+              disablePast
+              minDate={today.add(1, "day")}
             />
             <DatePicker
-              label="End date"
+              label="End date *"
               value={endDate}
               onChange={(newValue) => setEndDate(newValue)}
+              disablePast
+              minDate={startDate}
             />
           </LocalizationProvider>
           <Button

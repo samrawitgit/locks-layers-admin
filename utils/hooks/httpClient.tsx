@@ -1,11 +1,13 @@
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 
-import { AppContext } from "@utils/containers/app.container";
+// import { AppContext } from "@utils/containers/app.container";
+
+const URL = "http://localhost:8080";
 
 export const useHttpClient = () => {
   const [isLoading, setIsLoading] = useState(false);
-  // const [error, setError] = useState<any>();
-  const { error, setError } = useContext(AppContext);
+  const [error, setError] = useState<any>();
+  // const { error, setError } = useContext(AppContext);
 
   const activeHttpRequests = useRef<any[]>([]);
 
@@ -18,7 +20,7 @@ export const useHttpClient = () => {
       try {
         const response = await fetch(url, {
           method,
-          body,
+          body: body ? JSON.stringify(body) : null,
           headers,
           signal: httpAbortCtrll.signal,
         });
@@ -30,7 +32,8 @@ export const useHttpClient = () => {
         console.log({ response, responseData });
 
         if (!response.ok) {
-          throw new Error(responseData.message);
+          // throw new Error(responseData.message);
+          setError(responseData.message);
         }
 
         setIsLoading(false);

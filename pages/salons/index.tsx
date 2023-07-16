@@ -12,30 +12,12 @@ import {
   ImageSrc,
 } from "./StyledSalon";
 
-const images = [
-  // TODO: from backend
-  {
-    url: "/locations/torino.jpg",
-    title: "torino",
-    width: "33%",
-  },
-  {
-    url: "/locations/milano.jpg",
-    title: "milano",
-    width: "33%",
-  },
-  {
-    url: "/locations/roma.jpg",
-    title: "roma",
-    width: "33%",
-  },
-];
-
 const ButtonBases = (props) => {
-  const { image } = props;
+  const { locationData } = props;
+  const { city, image_url } = locationData;
   const router = useRouter();
   const onClick = () => {
-    router.push(`/salons/${image.title}`);
+    router.push(`/salons/${city.toLowerCase()}`);
   };
   return (
     <ImageButton
@@ -45,7 +27,7 @@ const ButtonBases = (props) => {
         width: "100%",
       }}
     >
-      <ImageSrc style={{ backgroundImage: `url(${image.url})` }} />
+      <ImageSrc style={{ backgroundImage: `url(${image_url})` }} />
       <ImageBackdrop className="MuiImageBackdrop-root" />
       <Image>
         <Typography
@@ -57,11 +39,10 @@ const ButtonBases = (props) => {
             p: 4,
             pt: 2,
             pb: (theme) => `calc(${theme.spacing(1)} + 6px)`,
-            textTransform: "capitalize",
             fontSize: "1.5rem",
           }}
         >
-          {image.title}
+          {city}
           <ImageMarked className="MuiImageMarked-root" />
         </Typography>
       </Image>
@@ -70,28 +51,40 @@ const ButtonBases = (props) => {
 };
 
 function Salons(props) {
+  const { locations } = props;
+
   return (
-    <>
-      <Head>
-        <title>Locks&Layers</title>
-        <meta name="description" content="Locks&Layers locations" />
-      </Head>
-      <Grid
-        container
-        spacing={0}
-        alignItems="center"
-        sx={{
-          height: "calc(100vh - 100px)",
-        }}
-      >
-        {images.map((image, i) => (
-          <Grid item xs={4} key={`loc-el-${i}`}>
-            <ButtonBases image={image} />
-          </Grid>
-        ))}
-      </Grid>
-    </>
+    <Grid
+      container
+      spacing={0}
+      alignItems="center"
+      sx={{
+        height: "calc(100vh - 100px)",
+      }}
+    >
+      {locations.map((locationData, i) => (
+        <Grid item xs={4} key={`loc-el-${i}`}>
+          <ButtonBases locationData={locationData} />
+        </Grid>
+      ))}
+    </Grid>
   );
 }
 
 export default Salons;
+
+export async function getServerSideProps(context) {
+  const response = await fetch("http://localhost:8080/admin/locations", {
+    method: "GET",
+  });
+  const responseData = await response.json();
+  console.log({ responseData });
+
+  if (responseData.data && responseData.data.locations.length) {
+    return {
+      props: { locations: responseData.data.locations },
+    };
+  } else {
+    return <Typography>No data available</Typography>;
+  }
+}

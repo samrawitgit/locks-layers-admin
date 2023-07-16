@@ -1,14 +1,33 @@
+import { useHttpClient } from "@utils/hooks/httpClient";
 import React, { useState, useEffect } from "react";
 
 const AppContext = React.createContext(null);
 
 function AppStore(props) {
   const { children } = props;
+  const { sendRequest } = useHttpClient();
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [user, setUser] = useState(null);
-  const [error, setError] = useState<
-    { title: string; message: string } | boolean
-  >(false);
+  // const [error, setError] = useState<
+  //   { title: string; message: string } | boolean
+  // >(false);
+
+  const [locations, setLocations] = useState([]);
+  const [services, setServices] = useState([]);
+
+  const getLocations = async () => {
+    const res = await sendRequest("http://localhost:8080/admin/locations");
+    if (!res.error) {
+      setLocations(res.data.locations);
+    }
+  };
+
+  const getServices = async () => {
+    const res = await sendRequest("http://localhost:8080/admin/services");
+    if (!res.error) {
+      setServices(res.data.services);
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -16,6 +35,9 @@ function AppStore(props) {
     if (token && userId) {
       setUser(userId);
       setIsLoggedIn(true);
+
+      getLocations();
+      getServices();
     }
     console.log({ token, userId });
   }, []);
@@ -27,10 +49,13 @@ function AppStore(props) {
       value={{
         isLoggedIn,
         setIsLoggedIn,
-        error,
-        setError,
+        // error,
+        // setError,
         user,
         setUser,
+        // SalonData
+        locations,
+        services,
       }}
     >
       {/* {isLoggedIn ? children : <Login />} */}

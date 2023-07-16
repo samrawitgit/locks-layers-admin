@@ -21,7 +21,7 @@ const Login = (props) => {
   const theme = useTheme();
   const { isLoggedIn, setIsLoggedIn, user, setUser } = useContext(AppContext);
   const { showPopUp, hidePopUp } = useContext(PopUpContext);
-  const { isLoading, error, sendRequest, clearError } = useHttpClient();
+  const { sendRequest } = useHttpClient();
 
   if (isLoggedIn) {
     router.push("/");

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import { styled } from "@mui/material/styles";
 import {
@@ -24,6 +24,7 @@ import PaletteOutlinedIcon from "@mui/icons-material/PaletteOutlined";
 import AirOutlinedIcon from "@mui/icons-material/AirOutlined";
 
 import NextLinkComposed from "../../components/NextLink/NextLink";
+import { AppContext } from "@utils/containers/app.container";
 
 const commonData = {
   openingTime: "9",
@@ -89,19 +90,86 @@ const Item = styled(Paper)(({ theme }) => ({
   color: theme.palette.text.secondary,
 }));
 
+interface ILocation {
+  road: string;
+  number: string;
+  post_code: string;
+  city: string;
+  country: string;
+  id_location: number;
+  image_url: string;
+  business_hours: any[];
+}
+
 const LocationDetails = (props) => {
   const router = useRouter();
   const salonLocation = router.query.loc;
-  console.log({ query: router.query, router });
-  const selectedSalonData = React.useMemo(() => {
-    return salonData.find((salon) => salon.location == salonLocation);
-  }, [salonLocation]);
+  const { locations, services } = useContext(AppContext);
 
-  // TODO: useEffect to fetch location data maybe add getProps
+  const location = useMemo(() => {
+    const selLocation = locations.find(
+      (loc) => loc.city.toLowerCase() == salonLocation[0]
+    );
+    if (selLocation) {
+      const parseBh = selLocation.business_hours.map((day) => {
+        if (day.opening_time && day.closing_time) {
+          return {
+            ...day,
+            opening_time: day.opening_time.slice(0, 5),
+            closing_time: day.closing_time.slice(0, 5),
+          };
+        }
+        return day;
+      });
+      return {
+        ...selLocation,
+        business_hours: parseBh,
+      };
+    }
+  }, [router]);
 
-  if (!selectedSalonData) {
+  const services_ = useMemo(() => {
+    const services_ = services.map((s, i) => {
+      let icon;
+      switch (s.service_type) {
+        case "trim":
+          icon = (
+            <ContentCutOutlinedIcon
+              sx={{ marginRight: "15px", marginBottom: "-7px" }}
+            />
+          );
+          break;
+        case "perm":
+          icon = (
+            <AirOutlinedIcon
+              sx={{ marginRight: "15px", marginBottom: "-7px" }}
+            />
+          );
+          break;
+        case "color":
+          icon = (
+            <PaletteOutlinedIcon
+              sx={{ marginRight: "15px", marginBottom: "-7px" }}
+            />
+          );
+          break;
+        default:
+          break;
+      }
+      return {
+        type: s.service_type,
+        duration: s.duration.slice(0, 5) + " h",
+        icon,
+      };
+    });
+    return services_;
+  }, [services]);
+
+  if (!locations.length || !location) {
     return <Typography>No data available</Typography>;
   }
+
+  console.log({ location, services, services_ });
 
   return (
     <>
@@ -109,7 +177,7 @@ const LocationDetails = (props) => {
         variant="h3"
         sx={{ textAlign: "center", my: 6, textTransform: "capitalize" }}
       >
-        {selectedSalonData.location}
+        {location.city}
       </Typography>
       <Grid container spacing={4} rowSpacing={4}>
         <Grid item xs={12} md={6}>
@@ -117,7 +185,9 @@ const LocationDetails = (props) => {
             <Card sx={{ textAlign: "center" }}>
               <CardHeader title="Address" />
               <CardContent>
-                <Typography>{selectedSalonData.address}</Typography>
+                <Typography>
+                  {location.road}, {location.number}, {location.post_code}
+                </Typography>
               </CardContent>
             </Card>
 
@@ -132,10 +202,10 @@ const LocationDetails = (props) => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {commonData.services.map(({ id, duration, icon }, i) => (
+                    {services_.map(({ type, duration, icon }, i) => (
                       <TableRow key={`service-${i}`}>
                         <TableCell align="center" sx={{}}>
-                          {icon} {id}
+                          {icon} {type}
                         </TableCell>
                         <TableCell align="center">{duration}</TableCell>
                       </TableRow>
@@ -153,20 +223,18 @@ const LocationDetails = (props) => {
             <CardContent>
               <Table aria-label="simple table">
                 <TableBody>
-                  {[
-                    "Monday",
-                    "Tuesday",
-                    "Wednesday",
-                    "Thursday",
-                    "Friday",
-                    "Saturday",
-                    "Sunday",
-                  ].map((day, i) => (
+                  {location.business_hours.map((day, i) => (
                     <TableRow key={`schedule-el-${i}`}>
-                      <TableCell align="left">{day}</TableCell>
-                      <TableCell>09:00</TableCell>
-                      <TableCell>-</TableCell>
-                      <TableCell>18:00</TableCell>
+                      <TableCell align="left">{day.day_week}</TableCell>
+                      <TableCell align="center">
+                        {day.closed ? "" : day.opening_time}
+                      </TableCell>
+                      <TableCell align="center">
+                        {day.closed ? "Closed" : "-"}
+                      </TableCell>
+                      <TableCell align="center">
+                        {day.closed ? "" : day.closing_time}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -185,8 +253,10 @@ const LocationDetails = (props) => {
                 divider={<Divider orientation="vertical" flexItem />}
                 justifyContent="center"
               >
-                {selectedSalonData.staffMembers.map((staff, i) => (
-                  <Typography key={`staff-member-${i}`}>{staff}</Typography>
+                {location.staff.map((staff, i) => (
+                  <Typography key={`staff-member-${i}`}>
+                    {staff.name}
+                  </Typography>
                 ))}
               </Stack>
             </CardContent>
