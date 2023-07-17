@@ -21,8 +21,8 @@ const StyledNavbar = styled(AppBar)(({ theme }) => ({
 
   ".center-logo-label": {
     display: "flex",
-    marginRight: "2",
-    flexGrow: "1",
+    marginRight: 2,
+    flexGrow: 1,
     fontFamily: "monospace",
     fontWeight: 700,
     letterSpacing: "0.3rem",
@@ -31,7 +31,7 @@ const StyledNavbar = styled(AppBar)(({ theme }) => ({
   },
 
   ".menu-list": {
-    flexGrow: "1",
+    flexGrow: 1,
     display: "none",
     a: {
       marginTop: "16px",
