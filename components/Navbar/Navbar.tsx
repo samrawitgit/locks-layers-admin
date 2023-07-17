@@ -8,9 +8,9 @@ import MenuIcon from "@mui/icons-material/Menu";
 import Container from "@mui/material/Container";
 import Button from "@mui/material/Button";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
+import { useRouter } from "next/router";
 
 import NextLinkComposed from "../../components/NextLink/NextLink";
-
 import { AppContext } from "@utils/containers/app.container";
 
 import StyledNavbar from "./StyledNavbar";
@@ -22,6 +22,7 @@ const pages = [
 const settings = ["Profile", "Account", "Dashboard", "Logout"];
 
 function Navbar() {
+  const router = useRouter();
   const { isLoggedIn, setIsLoggedIn } = React.useContext(AppContext);
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
     null
@@ -34,16 +35,6 @@ function Navbar() {
   const handleCloseNavMenu = () => {
     setAnchorElNav(null);
   };
-
-  // const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
-  // 	null
-  // );
-  // const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
-  // 	setAnchorElUser(event.currentTarget);
-  // };
-  // const handleCloseUserMenu = () => {
-  // 	setAnchorElUser(null);
-  // };
 
   const logout = () => {
     setIsLoggedIn(false);
@@ -104,7 +95,11 @@ function Navbar() {
                   key={`nav-el-${i}`}
                   to={route}
                   onClick={handleCloseNavMenu}
-                  sx={{ md: "none", display: "block" }}
+                  sx={{
+                    md: "none",
+                    display: "block",
+                  }}
+                  className={route === router.pathname ? "active " : ""}
                 >
                   {title}
                 </Button>
@@ -129,6 +124,7 @@ function Navbar() {
                 key={`nav-el-${i}`}
                 to={route}
                 onClick={handleCloseNavMenu}
+                className={route === router.pathname ? "active " : ""}
               >
                 <Typography textAlign="center">{title}</Typography>
               </Button>

@@ -1,6 +1,6 @@
-import React from 'react';
+import React from "react";
 
-import Modal from '@components/Modal/Modal'
+import Modal from "@components/Modal/Modal";
 
 // export interface PopUpOptions {
 //   type?: PopUpTypes | string;
@@ -35,19 +35,27 @@ export const PopUpContainer = (props) => {
   const [state, setState] = React.useState<any>({
     // PopUpState
     show: false,
-    title: '',
+    title: "",
     message: null,
     footer: null,
-    options: { component: null }
+    options: { component: null },
+    onClose: () => {},
   });
 
-  const show = ({ title, content, footer, options = { component: null } }) => {
+  const show = ({
+    title,
+    content,
+    footer,
+    options = { component: null },
+    onClose = () => {},
+  }) => {
     setState({
       show: true,
       title,
       content,
       footer,
-      options
+      options,
+      onClose,
     });
   };
 
@@ -57,10 +65,11 @@ export const PopUpContainer = (props) => {
     }
     setState({
       show: false,
-      title: '',
+      title: "",
       content: null,
       footer: null,
-      options: { component: null }
+      options: { component: null },
+      onClose: () => {},
     });
   };
 
@@ -69,12 +78,18 @@ export const PopUpContainer = (props) => {
       value={{
         showPopUp: show,
         hidePopUp: hide,
-        state: state
+        state: state,
       }}
     >
       {children}
       {state.show && (
-        <Modal {...state} hide={hide} />
+        <Modal
+          {...state}
+          hide={() => {
+            hide();
+            state.onClose();
+          }}
+        />
       )}
     </PopUpContext.Provider>
   );

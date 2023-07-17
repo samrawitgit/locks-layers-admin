@@ -2,91 +2,82 @@ import React from "react";
 import { styled } from "@mui/material/styles";
 import AppBar from "@mui/material/AppBar";
 
-// (  ({ theme }) => `border: 3px solid ${theme.palette.primary.main};`
-const StyledNavbar = styled(AppBar)`
-  position: static;
-  .left-logo-icon {
-    display: none;
-    margin-right: 8px;
-  }
+const StyledNavbar = styled(AppBar)(({ theme }) => ({
+  position: "static",
+  ".left-logo-icon": {
+    display: "none",
+    marginRight: "8px",
+  },
 
-  .left-logo-writing {
-    display: none;
-    margin-right: 16px;
-    font-family: monospace;
-    font-weight: 700;
-    letter-spacing: 0.3rem;
-    color: inherit;
-    text-decoration: none;
-  }
+  ".left-logo-writing": {
+    display: "none",
+    marginRight: "16px",
+    fontFamily: "monospace",
+    fontWeight: 700,
+    letterSpacing: "0.3rem",
+    color: "inherit",
+    textDecoration: "none",
+  },
 
-  .center-logo-label {
-    display: flex;
-    margin-right: 2;
-    flex-grow: 1;
-    font-family: monospace;
-    font-weight: 700;
-    letter-spacing: 0.3rem;
-    color: inherit;
-    text-decoration: none;
-  }
+  ".center-logo-label": {
+    display: "flex",
+    marginRight: "2",
+    flexGrow: "1",
+    fontFamily: "monospace",
+    fontWeight: 700,
+    letterSpacing: "0.3rem",
+    color: "inherit",
+    textDecoration: "none",
+  },
 
-  .menu-list {
-    flex-grow: 1;
-    display: none;
-    a {
-      margin-top: 16px;
-      margin-bottom: 16px;
-      color: white;
-      display: block;
-    }
-  }
+  ".menu-list": {
+    flexGrow: "1",
+    display: "none",
+    a: {
+      marginTop: "16px",
+      marginBottom: "16px",
+      color: "white",
+      display: "block",
+    },
+  },
 
-  .logout-btn {
-    display: block;
-    flex-grow: 0;
-    margin-top: 16px;
-    margin-bottom: 16px;
-    padding: 12px;
-  }
+  ".logoutBtn": {
+    display: "block",
+    flexGrow: 0,
+    marginTop: "16px",
+    marginBottom: "16px",
+    padding: "12px",
+  },
 
-  .menu-icon {
-    display: flex;
-    flex-grow: 1;
+  ".menu-icon": {
+    display: "flex",
+    flexGrow: 1,
 
-    #menu-appbar {
-      display: block;
-    }
-  }
+    "#menu-appbar": {
+      display: "block",
+    },
+  },
 
-  .center-logo-icon {
-    display: flex;
-    margin-right: 8px;
-  }
+  ".center-logo-icon": {
+    display: "flex",
+    marginRight: "8px",
+  },
 
-  @media (min-width: 900px) {
-    /*md = medium*/
-    .left-logo-icon,
-    .left-logo-writing,
-    .menu-list {
-      display: flex;
-    }
+  [theme.breakpoints.up("md")]: {
+    ".left-logo-icon, .left-logo-writing, .menu-list": {
+      display: "flex",
+    },
 
-    .center-logo-icon,
-    .center-logo-label,
-    .menu-icon,
-    #menu-appbar {
-      display: none;
-    }
-  }
+    ".center-logo-icon, .center-logo-label, .menu-icon, #menu-appbar": {
+      display: "none",
+    },
 
-  @media (min-width: 600px) {
-    /*sm = small*/
-  }
-
-  @media (min-width: 1200px) {
-    /*lg = large*/
-  }
-`;
+    ".active": {
+      backgroundColor: "#ffffff57",
+      color: `${theme.palette.secondary.main} !important`,
+      fontWeight: "700 !important",
+    },
+  },
+}));
 
 export default StyledNavbar;

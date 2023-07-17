@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useContext, useEffect, useMemo } from "react";
 import Head from "next/head";
 import {
   DateCalendar,
@@ -9,6 +9,9 @@ import {
 } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
+import _reduce from "lodash/reduce";
+import _uniq from "lodash/uniq";
+import _isEmpty from "lodash/isEmpty";
 import {
   Badge,
   Drawer,
@@ -20,115 +23,46 @@ import {
   Container,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { useRouter } from "next/router";
 
-const initialValue = dayjs("2022-04-17");
+import { PopUpContext } from "@utils/index";
 
-const bookings = [
-  {
-    date: "2022-04-01",
-    time: "11.30",
-    staff: "Maurizio",
-    service: "trim",
-    customer: "Jane",
-    location: "milano",
-  },
-  {
-    date: "2022-04-01",
-    time: "14.24",
-    staff: "Pietro",
-    service: "perm",
-    customer: "Stan",
-    location: "milano",
-  },
-  {
-    date: "2022-04-02",
-    time: "11.30",
-    staff: "Veronica",
-    service: "perm",
-    customer: "Frank",
-    location: "roma",
-  },
-  {
-    date: "2022-04-15",
-    time: "11.30",
-    staff: "Pietro",
-    service: "perm",
-    customer: "Louise",
-    location: "torino",
-  },
-  {
-    date: "2022-04-30",
-    time: "11.30",
-    staff: "Giulia",
-    service: "dye",
-    customer: "Paul",
-    location: "roma",
-  },
-  {
-    date: "2022-05-23",
-    time: "11.30",
-    staff: "Giulia",
-    service: "dye",
-    customer: "Paul",
-    location: "roma",
-  },
-  {
-    date: "2022-05-14",
-    time: "11.30",
-    staff: "Giulia",
-    service: "dye",
-    customer: "Paul",
-    location: "roma",
-  },
-];
+const TODAY = dayjs();
 
-const DayDetails = ({ datePicked, loc }) => {
-  console.log("details", {
-    datePicked,
-    day: dayjs(datePicked).format("YYYY-MM-DD"),
-  });
-
-  const dayData = React.useMemo(() => {
-    const selectedDateData =
-      bookings.filter(
-        (booking) =>
-          dayjs(datePicked).format("YYYY-MM-DD") === booking.date &&
-          booking.location === loc
-      ) || [];
-    return selectedDateData;
-  }, [datePicked]);
-
-  if (dayData.length < 1) {
+const DayDetails = ({ bookingsData }) => {
+  if (bookingsData.length < 1) {
     return <Typography sx={{ width: 450 }}>No bookings yet</Typography>;
   }
 
   return (
     <Box sx={{ width: 450 }} role="presentation">
-      {dayData.map((singleBooking, i) => {
-        return (
-          <Accordion key={`list-el-${i}`}>
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon />}
-              aria-controls="panel1a-content"
-              id="panel1a-header"
-            >
-              <Typography>{singleBooking.customer}</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Typography>
-                {singleBooking.time} - {singleBooking.service} -{" "}
-                {singleBooking.staff}
-              </Typography>
-            </AccordionDetails>
-          </Accordion>
-        );
-      })}
+      {bookingsData.map(
+        (
+          { user, booking_date, service_type, staff_name, staff_surname },
+          i: number
+        ) => {
+          return (
+            <Accordion key={`list-el-${i}`}>
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                aria-controls="panel1a-content"
+                id="panel1a-header"
+              >
+                <Typography>Client: {user.name}</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Typography>UserName: {user.userName}</Typography>
+                <Typography>
+                  {booking_date.format("HH:mm")} - {service_type} - Staff:{" "}
+                  {staff_name} {staff_surname}
+                </Typography>
+              </AccordionDetails>
+            </Accordion>
+          );
+        }
+      )}
     </Box>
   );
 };
-{
-}
 
 function ServerDay(
   props: PickersDayProps<Dayjs> & {
@@ -184,47 +118,60 @@ function ServerDay(
 }
 
 function Bookings(props) {
-  const router = useRouter();
-  const { loc } = router.query;
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [highlightedDays, setHighlightedDays] = React.useState([]);
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [datePicked, setDatePicked] = React.useState<Dayjs | boolean>(false);
+  const { responseLocData, responseCalData, selectedLoc, calendar } = props;
+  const { showPopUp } = useContext(PopUpContext);
 
-  // React.useEffect(() => {
-  //   fetchHighlightedDays(initialValue);
-  //   // abort request on unmount
-  //   return () => requestAbortController.current?.abort();
-  // }, []);
+  const [isLoading, setIsLoading] = useState(false);
+  const [highlightedDays, setHighlightedDays] = useState([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [datePicked, setDatePicked] = useState<Dayjs | boolean>(false);
 
-  const fetchHighlightedDays = React.useCallback((newDate) => {
-    setIsLoading(true);
-    console.log({ month: newDate.month() });
-    const highDays = bookings
-      .filter(({ location }) => location === loc)
-      .filter(({ date }) => dayjs(date).month() === newDate.month())
-      .map((booking) => parseInt(dayjs(booking.date).format("DD")));
-    setHighlightedDays(highDays);
-    setIsLoading(false);
+  const bookingData = useMemo(() => {
+    if (!_isEmpty(calendar)) {
+      return _reduce(
+        calendar,
+        (acc, val, key) => {
+          val = val.map((b) => ({
+            ...b,
+            booking_date: dayjs(b.booking_date),
+          }));
+          acc[key] = val;
+          return acc;
+        },
+        {}
+      );
+    }
+    return {};
+  }, [calendar]);
+
+  const fetchHighlightedDays = React.useCallback(
+    (newMonth: string) => {
+      setIsLoading(true);
+      if (!_isEmpty(bookingData) && bookingData[newMonth]) {
+        const highDays = _uniq(
+          bookingData[newMonth].map((booking: { booking_date: Dayjs }) =>
+            parseInt(booking.booking_date.format("DD"))
+          )
+        );
+        setHighlightedDays(highDays);
+      } else {
+        setHighlightedDays([]);
+      }
+      setIsLoading(false);
+    },
+    [selectedLoc, bookingData]
+  );
+
+  useEffect(() => {
+    if (responseLocData && responseLocData.error) {
+      return showPopUp({ title: "Error", content: responseLocData.message });
+    } else if (responseCalData && responseCalData.error) {
+      return showPopUp({ title: "Error", content: responseCalData.message });
+    }
+    fetchHighlightedDays(TODAY.format("MM-YYYY"));
   }, []);
-
-  React.useEffect(() => {
-    fetchHighlightedDays(initialValue);
-  }, []);
-
-  const handleMonthChange = (date: Dayjs) => {
-    /*if (requestAbortController.current) {
-      // make sure that you are aborting useless requests
-      // because it is possible to switch between months pretty quickly
-      requestAbortController.current.abort();
-    }*/
-
-    setHighlightedDays([]);
-    fetchHighlightedDays(date);
-  };
 
   const toggleDrawer = (event: React.KeyboardEvent | React.MouseEvent) => {
-    console.log("toggle", { event });
     if (
       event.type === "keydown" &&
       ((event as React.KeyboardEvent).key === "Tab" ||
@@ -247,14 +194,14 @@ function Bookings(props) {
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <DateCalendar
             showDaysOutsideCurrentMonth={false}
-            defaultValue={initialValue}
+            defaultValue={TODAY}
             loading={isLoading}
-            onMonthChange={fetchHighlightedDays}
+            onMonthChange={(newDate) =>
+              fetchHighlightedDays(newDate.format("MM-YYYY"))
+            }
             views={["day"]}
             renderLoading={() => <DayCalendarSkeleton />}
-            slots={{
-              day: ServerDay,
-            }}
+            slots={{ day: ServerDay }}
             slotProps={{
               day: {
                 highlightedDays,
@@ -313,7 +260,15 @@ function Bookings(props) {
       </Container>
       <div>
         <Drawer anchor={"right"} open={isOpen} onClose={toggleDrawer}>
-          <DayDetails datePicked={datePicked} loc={loc} />
+          <DayDetails
+            bookingsData={
+              dayjs.isDayjs(datePicked)
+                ? bookingData[datePicked.format("MM-YYYY")].filter(
+                    ({ booking_date }) => datePicked.isSame(booking_date, "day")
+                  )
+                : []
+            }
+          />
         </Drawer>
       </div>
     </div>
@@ -321,3 +276,29 @@ function Bookings(props) {
 }
 
 export default Bookings;
+
+export async function getServerSideProps({ query }) {
+  const responseLoc = await fetch("http://localhost:8080/admin/locations", {
+    method: "GET",
+  });
+  const responseLocData = await responseLoc.json();
+
+  const selectedLoc = responseLocData.data.locations.find(
+    (loc) => loc.city.toLowerCase() === query.loc
+  );
+
+  if (!responseLocData.error) {
+    const response = await fetch(
+      `http://localhost:8080/bookings/calendar?locationId=${selectedLoc.id_location}`,
+      { method: "GET" }
+    );
+    const responseCalData = await response.json();
+
+    if (!responseCalData.error) {
+      const data = responseCalData.data.bookingData;
+
+      return { props: { calendar: data, selectedLoc } };
+    } else return { props: { responseCalData, calendar: {}, selectedLoc: {} } };
+  }
+  return { props: { responseLocData, calendar: {}, selectedLoc: {} } };
+}

@@ -3,6 +3,7 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 
 import Navbar from "./Navbar/Navbar";
 import { AppContext } from "@utils/containers/app.container";
+import Head from "next/head";
 
 const theme = createTheme({
   palette: {
@@ -21,6 +22,10 @@ export default function Layout({ children }) {
     <ThemeProvider theme={theme}>
       {/* <div id="overlays" />
 			<div id="modal-root" /> */}
+      <Head>
+        <title>Locks&Layers</title>
+        <meta name="description" content="Locks&Layers locations" />
+      </Head>
       {isLoggedIn && <Navbar />}
       <main>{children}</main>
     </ThemeProvider>

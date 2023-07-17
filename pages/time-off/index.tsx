@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useContext } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
+import dayjs, { Dayjs } from "dayjs";
 import {
   FormLabel,
   FormGroup,
@@ -15,17 +16,17 @@ import {
   Radio,
   Stack,
 } from "@mui/material";
-import dayjs, { Dayjs } from "dayjs";
 import {
   LocalizationProvider,
   DatePicker,
   TimePicker,
 } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { AppContext, useHttpClient, PopUpContext } from "@utils/index";
 
 const locationsOld = ["torino", "milano", "roma"];
 
-const locations = [
+const locations_ = [
   { location: "torino", team: ["Laura1", "Laura2"] },
   {
     location: "milano",
@@ -132,17 +133,52 @@ const TimeRangeComponent = (props) => {
 
 function TimeOff(props) {
   const router = useRouter();
-  const query = router.query;
+
+  const { locations, user } = useContext(AppContext);
+  const { sendRequest } = useHttpClient();
+  const { showPopUp } = useContext(PopUpContext);
+
+  console.log({ locations, user });
 
   const [locationValue, setLocationValue] = React.useState<string | null>(null);
+
   const [staffValue, setStaffValue] = React.useState<string | null>(null);
   const [staffOptions, setStaffOptions] = React.useState<string[]>([]);
+
   const [typeValue, setTypeValue] = React.useState<string | null>(null);
   const [startShiftValue, setStartShiftValue] = React.useState<Dayjs | null>(); // maybe today
   const [endShiftValue, setEndShiftValue] = React.useState<Dayjs | null>();
 
-  const onSubmit = () => {
-    console.log("submit!");
+  const onSubmit = async () => {
+    const selectedLoc = locations.find((loc) => loc.city === locationValue);
+    const selectedStaff = selectedLoc.staff.find((s) => s.name === staffValue);
+    console.log("submit!", {
+      locationId: selectedLoc.id_location,
+      staff_id: selectedStaff.id_staff,
+      staffValue,
+      start: startShiftValue.format("YYYY-MM-DD HH:mm:ss"),
+      end: endShiftValue.format("YYYY-MM-DD HH:mm:ss"),
+    });
+    const closeLocRes = await sendRequest(
+      "http://localhost:8080/admin/time-off",
+      "POST",
+      {
+        staff_id: selectedStaff.id_staff,
+        start_date: startShiftValue.format("YYYY-MM-DD HH:mm:ss"),
+        end_date: endShiftValue.format("YYYY-MM-DD HH:mm:ss"),
+      },
+      {
+        "Content-Type": "application/json",
+      }
+    );
+    if (closeLocRes.error) {
+      return showPopUp({ title: "Error", content: closeLocRes.message });
+    }
+    return showPopUp({
+      title: "Success",
+      content: closeLocRes.message,
+      onClose: () => router.push("/salons"),
+    });
   };
 
   return (
@@ -178,17 +214,15 @@ function TimeOff(props) {
           <Autocomplete
             disablePortal
             id="combo-box-demo"
-            options={locationsOld}
-            renderInput={(params) => <TextField {...params} label="Salon" />}
+            options={locations.map((loc) => loc.city)}
+            renderInput={(params) => (
+              <TextField {...params} label="Salon" required />
+            )}
             value={locationValue}
             onChange={(event: any, newValue: string | null) => {
               setLocationValue(newValue);
-              setStaffOptions(() => {
-                const data = locations.find(
-                  (locData) => locData.location === newValue
-                );
-                return data ? data.team : [];
-              });
+              const data = locations.find((loc) => loc.city === newValue);
+              setStaffOptions(() => data.staff.map((s) => s.name));
               setStaffValue(null);
               setTypeValue(null);
               setStartShiftValue(null);
@@ -202,7 +236,7 @@ function TimeOff(props) {
             id="combo-box-demo"
             options={staffOptions}
             renderInput={(params) => (
-              <TextField {...params} label="Staff member" />
+              <TextField {...params} label="Staff member" required />
             )}
             sx={{ width: 400 }}
             value={staffValue}
