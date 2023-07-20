@@ -80,9 +80,9 @@ export async function getServerSideProps(context) {
   const responseData = await response.json();
   console.log({ responseData });
 
-  if (responseData.data && responseData.data.locations.length) {
+  if (responseData && responseData.locations.length) {
     return {
-      props: { locations: responseData.data.locations },
+      props: { locations: responseData.locations },
     };
   } else {
     return <Typography>No data available</Typography>;

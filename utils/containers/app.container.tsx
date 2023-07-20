@@ -18,14 +18,14 @@ function AppStore(props) {
   const getLocations = async () => {
     const res = await sendRequest("http://localhost:8080/admin/locations");
     if (!res.error) {
-      setLocations(res.data.locations);
+      setLocations(res.locations);
     }
   };
 
   const getServices = async () => {
     const res = await sendRequest("http://localhost:8080/admin/services");
     if (!res.error) {
-      setServices(res.data.services);
+      setServices(res.services);
     }
   };
 

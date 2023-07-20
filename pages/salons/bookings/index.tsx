@@ -283,7 +283,7 @@ export async function getServerSideProps({ query }) {
   });
   const responseLocData = await responseLoc.json();
 
-  const selectedLoc = responseLocData.data.locations.find(
+  const selectedLoc = responseLocData.locations.find(
     (loc) => loc.city.toLowerCase() === query.loc
   );
 
@@ -295,7 +295,7 @@ export async function getServerSideProps({ query }) {
     const responseCalData = await response.json();
 
     if (!responseCalData.error) {
-      const data = responseCalData.data.bookingData;
+      const data = responseCalData.bookingData;
 
       return { props: { calendar: data, selectedLoc } };
     } else return { props: { responseCalData, calendar: {}, selectedLoc: {} } };
