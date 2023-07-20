@@ -20,8 +20,7 @@ const StyledNavbar = styled(AppBar)(({ theme }) => ({
   },
 
   ".logout-btn": {
-    marginTop: "16px",
-    marginBottom: "16px",
+    marginY: "16px",
     padding: "12px",
   },
 

@@ -17,9 +17,11 @@ import { AppContext } from "@utils/containers/app.container";
 import { useHttpClient } from "@utils/hooks/httpClient";
 import { PopUpContext } from "@utils/containers/pop-up.container";
 
+const TODAY = dayjs();
+
 function CloseSalon(props) {
   const router = useRouter();
-  const { locations } = useContext(AppContext);
+  const { locations, token } = useContext(AppContext);
   const { sendRequest } = useHttpClient();
   const { showPopUp } = useContext(PopUpContext);
 
@@ -29,22 +31,21 @@ function CloseSalon(props) {
     startDate: false,
     endDate: false,
   });
-  const today = dayjs();
 
   const location = useMemo(() => {
-    const selLocation = locations.find(
-      (loc) => loc.city.toLowerCase() == router.query.loc
-    );
+    const selLocation = router.query.loc
+      ? locations.find((loc) => loc.city.toLowerCase() == router.query.loc)
+      : locations.find((loc) => loc.city === salon);
     if (selLocation) setSalon(selLocation.city);
     return selLocation;
-  }, [locations, router]);
+  }, [locations, router, salon]);
 
-  const [startDate, setStartDate] = React.useState<Dayjs | null>(
-    today.add(1, "day")
-  );
-  const [endDate, setEndDate] = React.useState<Dayjs | null>(
-    today.add(2, "day")
-  );
+  const [reason, setReason] = useState("");
+
+  const [startDate, setStartDate] = useState<Dayjs | null>(TODAY.add(1, "day"));
+  const [endDate, setEndDate] = useState<Dayjs | null>(TODAY.add(2, "day"));
+
+  console.log({ token, reason, location, q: router.query.loc });
 
   const onSubmit = async () => {
     console.log("submit!");
@@ -71,15 +72,22 @@ function CloseSalon(props) {
           .set("minute", 0)
           .set("second", 0)
           .format("YYYY-MM-DD HH:mm:ss"),
+        reason,
       },
       {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       }
     );
-    // console.log({ closeLocRes });
-    if (closeLocRes.error) {
-      showPopUp({ title: "Error", content: closeLocRes.message });
+    showPopUp({
+      title: closeLocRes.error ? "Error" : "Success!",
+      content: closeLocRes.message,
+    });
+    if (!closeLocRes.error) {
+      setReason("");
     }
+    setStartDate(null);
+    setEndDate(null);
   };
 
   return (
@@ -133,6 +141,8 @@ function CloseSalon(props) {
           <TextField
             id="outlined-multiline-flexible"
             label="Reason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
             multiline
             rows={2}
             sx={{ width: 400 }}
@@ -143,7 +153,7 @@ function CloseSalon(props) {
               value={startDate}
               onChange={(newValue) => setStartDate(newValue)}
               disablePast
-              minDate={today.add(1, "day")}
+              minDate={TODAY.add(1, "day")}
             />
             <DatePicker
               label="End date *"
