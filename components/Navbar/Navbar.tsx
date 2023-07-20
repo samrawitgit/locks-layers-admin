@@ -7,12 +7,11 @@ import Menu from "@mui/material/Menu";
 import MenuIcon from "@mui/icons-material/Menu";
 import Container from "@mui/material/Container";
 import Button from "@mui/material/Button";
-import ContentCutIcon from "@mui/icons-material/ContentCut";
+import Image from "next/image";
 import { useRouter } from "next/router";
 
-import NextLinkComposed from "../../components/NextLink/NextLink";
 import { AppContext } from "@utils/containers/app.container";
-
+import NextLinkComposed from "../../components/NextLink/NextLink";
 import StyledNavbar from "./StyledNavbar";
 
 const pages = [
@@ -46,24 +45,27 @@ function Navbar() {
   return (
     <StyledNavbar className="navbar">
       <Container maxWidth="xl">
-        <Toolbar disableGutters>
-          <ContentCutIcon className="left-logo-icon" />
-          <Typography
-            className="left-logo-writing"
-            variant="h6"
-            noWrap
-            component="a"
-            href="/"
+        <Toolbar
+          disableGutters
+          className="toolbar"
+          style={{
+            justifyContent: "space-between",
+          }}
+        >
+          <Button
+            component={NextLinkComposed}
+            key={`left-logo`}
+            to="/"
+            className="left-logo-label"
           >
-            Locks&Layerss
-          </Typography>
-
-          <Box
-            className="menu-icon"
-            sx={{
-              flexGrow: 1,
-            }}
-          >
+            <Image
+              src={"/logos/logo-no-background.png"}
+              alt="Locks&Layerss"
+              width={150}
+              height={40}
+            />
+          </Button>
+          <Box className="menu-icon">
             <IconButton
               size="large"
               aria-label="account of current user"
@@ -107,16 +109,15 @@ function Navbar() {
             </Menu>
           </Box>
 
-          <ContentCutIcon className="center-logo-icon" />
-          <Typography
-            className="center-logo-label"
-            variant="h5"
-            noWrap
-            component="a"
-            href=""
-          >
-            Lock&Layers
-          </Typography>
+          <NextLinkComposed to="/">
+            <Image
+              className="center-logo-label"
+              src={"/logos/logo-no-background.png"}
+              alt="Locks&Layerss"
+              width={200}
+              height={50}
+            />
+          </NextLinkComposed>
           <Box className="menu-list">
             {pages.map(({ title, route }, i) => (
               <Button

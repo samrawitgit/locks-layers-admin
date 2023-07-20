@@ -1,13 +1,11 @@
-import React from "react";
 import { styled } from "@mui/material/styles";
 import { ButtonBase } from "@mui/material";
 
 export const ImageButton = styled(ButtonBase)(({ theme }) => ({
   position: "relative",
-  height: 500,
-  [theme.breakpoints.down("sm")]: {
-    width: "100% !important", // Overrides inline-style
-    height: 100,
+  height: 200,
+  [theme.breakpoints.up("md")]: {
+    height: 500,
   },
   "&:hover, &.Mui-focusVisible": {
     zIndex: 1,
@@ -33,7 +31,7 @@ export const ImageSrc = styled("span")({
   backgroundPosition: "center 40%",
 });
 
-export const Image = styled("span")(({ theme }) => ({
+export const MUIImage = styled("span")(({ theme }) => ({
   position: "absolute",
   left: 0,
   right: 0,

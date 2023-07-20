@@ -1,11 +1,10 @@
 import React from "react";
-import Head from "next/head";
 import { useRouter } from "next/router";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 
 import {
-  Image,
+  MUIImage,
   ImageBackdrop,
   ImageButton,
   ImageMarked,
@@ -29,7 +28,7 @@ const ButtonBases = (props) => {
     >
       <ImageSrc style={{ backgroundImage: `url(${image_url})` }} />
       <ImageBackdrop className="MuiImageBackdrop-root" />
-      <Image>
+      <MUIImage>
         <Typography
           component="span"
           variant="subtitle1"
@@ -45,7 +44,7 @@ const ButtonBases = (props) => {
           {city}
           <ImageMarked className="MuiImageMarked-root" />
         </Typography>
-      </Image>
+      </MUIImage>
     </ImageButton>
   );
 };
@@ -63,7 +62,7 @@ function Salons(props) {
       }}
     >
       {locations.map((locationData, i) => (
-        <Grid item xs={4} key={`loc-el-${i}`}>
+        <Grid item xs={12} md={4} key={`loc-el-${i}`}>
           <ButtonBases locationData={locationData} />
         </Grid>
       ))}

@@ -26,7 +26,7 @@ function HomePage(props) {
           flexDirection: "column",
           minWidth: "43vw",
           alignItems: "center",
-          height: "calc(100vh - 85px)",
+          height: "calc(100vh - 110px)",
           justifyContent: "space-evenly",
         }}
       >
