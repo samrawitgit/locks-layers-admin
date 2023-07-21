@@ -1,7 +1,6 @@
 import React, { useContext } from "react";
 import { AppContext } from "@utils/containers/app.container";
 import Head from "next/head";
-import { getSession } from "next-auth/react";
 import { Paper, Typography, Box, Button } from "@mui/material";
 import NextLinkComposed from "@components/NextLink/NextLink";
 
