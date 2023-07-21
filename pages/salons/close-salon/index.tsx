@@ -45,7 +45,7 @@ function CloseSalon(props) {
   const [startDate, setStartDate] = useState<Dayjs | null>(TODAY.add(1, "day"));
   const [endDate, setEndDate] = useState<Dayjs | null>(TODAY.add(2, "day"));
 
-  console.log({ token, reason, location, q: router.query.loc });
+  // console.log({ token, reason, location, q: router.query.loc });
 
   const onSubmit = async () => {
     console.log("submit!");
