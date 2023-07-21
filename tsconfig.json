@@ -33,7 +33,9 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "components/ErrorComponent"
+    "components/ErrorComponent",
+    "pages/auth/[...nextauth].js",
+    "pages/index.tsx"
   ],
   "exclude": ["node_modules"]
 }
