@@ -36,10 +36,11 @@ function Navbar() {
   };
 
   const logout = () => {
-    setIsLoggedIn(false);
     localStorage.removeItem("token");
     localStorage.removeItem("expiryDate");
     localStorage.removeItem("userId");
+    setIsLoggedIn(false);
+    router.replace("/login");
   };
 
   return (

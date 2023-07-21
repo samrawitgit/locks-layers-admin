@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import Head from "next/head";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
@@ -19,13 +19,10 @@ import {
 const Login = (props) => {
   const router = useRouter();
   const theme = useTheme();
-  const { isLoggedIn, setIsLoggedIn, user, setUser } = useContext(AppContext);
+  const { isLoggedIn, setIsLoggedIn, token, setToken, user, setUser } =
+    useContext(AppContext);
   const { showPopUp, hidePopUp } = useContext(PopUpContext);
   const { sendRequest } = useHttpClient();
-
-  if (isLoggedIn) {
-    router.push("/");
-  }
 
   const userNameInputRef = useRef<HTMLInputElement>();
   const passwordInputRef = useRef<HTMLInputElement>();
@@ -41,23 +38,24 @@ const Login = (props) => {
         });
         return;
       }
+
       const resData = await sendRequest(
         "http://localhost:8080/auth/admin-login",
         "POST",
-        JSON.stringify({
+        {
           userName: userNameInputRef.current?.value,
           password: passwordInputRef.current?.value,
-        }),
+        },
         {
           "Content-type": "application/json",
-          // "Authorization": 'Bearer ' + this.props.token //Bearer is a convention
         }
       );
       console.log({ resData });
 
-      // ... // only executes in case of res.ok
+      // only executes in case of res.ok
       setIsLoggedIn(true);
-      setUser(resData);
+      setUser(resData.userId);
+      setToken(resData.token);
       localStorage.setItem("token", resData.token);
       localStorage.setItem("userId", resData.userId);
       const remainingMilliseconds = 60 * 60 * 1000;
@@ -69,6 +67,7 @@ const Login = (props) => {
       showPopUp({ title: "Failed to authenticate", content: "try again" });
     }
   };
+  // console.log({ user, token, isLoggedIn });
 
   return (
     <div

@@ -7,6 +7,7 @@ function AppStore(props) {
   const { children } = props;
   const { sendRequest } = useHttpClient();
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [token, setToken] = useState(null);
   const [user, setUser] = useState(null);
   // const [error, setError] = useState<
   //   { title: string; message: string } | boolean
@@ -17,6 +18,7 @@ function AppStore(props) {
 
   const getLocations = async () => {
     const res = await sendRequest("http://localhost:8080/admin/locations");
+    // console.log({ res });
     if (!res.error) {
       setLocations(res.locations);
     }
@@ -24,6 +26,7 @@ function AppStore(props) {
 
   const getServices = async () => {
     const res = await sendRequest("http://localhost:8080/admin/services");
+    // console.log({ res });
     if (!res.error) {
       setServices(res.services);
     }
@@ -33,13 +36,13 @@ function AppStore(props) {
     const token = localStorage.getItem("token");
     const userId = localStorage.getItem("userId");
     if (token && userId) {
+      setToken(token);
       setUser(userId);
       setIsLoggedIn(true);
 
       getLocations();
       getServices();
     }
-    console.log({ token, userId });
   }, []);
 
   // TODO: redirect -> https://jasonwatmore.com/post/2021/08/30/next-js-redirect-to-login-page-if-unauthenticated
@@ -51,6 +54,8 @@ function AppStore(props) {
         setIsLoggedIn,
         // error,
         // setError,
+        token,
+        setToken,
         user,
         setUser,
         // SalonData
