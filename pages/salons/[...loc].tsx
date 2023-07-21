@@ -277,7 +277,7 @@ const LocationDetails = (props) => {
             component={NextLinkComposed}
             to={{
               pathname: "/salons/close-salon",
-              query: { loc: location._id_location },
+              query: { locId: location._id_location },
             }}
             variant="contained"
             endIcon={<WrongLocationOutlinedIcon />}
@@ -291,7 +291,7 @@ const LocationDetails = (props) => {
             component={NextLinkComposed}
             to={{
               pathname: "/salons/bookings",
-              query: { loc: location.id_location },
+              query: { locId: location.id_location },
             }}
             variant="contained"
             endIcon={<CalendarMonthOutlinedIcon />}

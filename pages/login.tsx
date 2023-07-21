@@ -24,6 +24,8 @@ const Login = (props) => {
   const { showPopUp, hidePopUp } = useContext(PopUpContext);
   const { sendRequest } = useHttpClient();
 
+  if (isLoggedIn) router.replace("/");
+
   const userNameInputRef = useRef<HTMLInputElement>();
   const passwordInputRef = useRef<HTMLInputElement>();
 

@@ -24,7 +24,8 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-import { PopUpContext } from "@utils/index";
+import { AppContext, PopUpContext } from "@utils/index";
+import { useRouter } from "next/router";
 
 const TODAY = dayjs();
 
@@ -118,13 +119,34 @@ function ServerDay(
 }
 
 function Bookings(props) {
-  const { responseLocData, responseCalData, selectedLoc, calendar } = props;
+  // const { responseLocData, responseCalData, selectedLoc, calendar } = props; // from serversideprops
+  const router = useRouter();
+  console.log({ router, p: router.asPath });
+  const locId = parseInt(router.asPath.split("?")[1].split("=")[1]);
   const { showPopUp } = useContext(PopUpContext);
+  const { locations, getCalendar } = useContext(AppContext);
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [highlightedDays, setHighlightedDays] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [datePicked, setDatePicked] = useState<Dayjs | boolean>(false);
+
+  const [calendar, setCalendar] = useState([]);
+
+  const selectedLoc = useMemo(() => {
+    console.log({ locId });
+    const selLocation = locations.find((loc) => loc.id_location == locId);
+    if (selLocation) {
+      getCalendar(selLocation.id_location)
+        .then((data) => {
+          setCalendar(data);
+        })
+        .catch((err) => console.log({ err }));
+      // const calendar = await getCalendar(selLocation.id_location);
+      // setCalendar(calendar);
+    }
+    return selLocation;
+  }, [router, locations]);
 
   const bookingData = useMemo(() => {
     if (!_isEmpty(calendar)) {
@@ -144,6 +166,7 @@ function Bookings(props) {
     return {};
   }, [calendar]);
 
+  console.log({ calendar, bookingData });
   const fetchHighlightedDays = React.useCallback(
     (newMonth: string) => {
       setIsLoading(true);
@@ -163,13 +186,13 @@ function Bookings(props) {
   );
 
   useEffect(() => {
-    if (responseLocData && responseLocData.error) {
-      return showPopUp({ title: "Error", content: responseLocData.message });
-    } else if (responseCalData && responseCalData.error) {
-      return showPopUp({ title: "Error", content: responseCalData.message });
-    }
+    // if (calendar && responseLocData.error) {
+    //   return showPopUp({ title: "Error", content: responseLocData.message });
+    // } else if (responseCalData && responseCalData.error) {
+    //   return showPopUp({ title: "Error", content: responseCalData.message });
+    // }
     fetchHighlightedDays(TODAY.format("MM-YYYY"));
-  }, []);
+  }, [bookingData]);
 
   const toggleDrawer = (event: React.KeyboardEvent | React.MouseEvent) => {
     if (
@@ -277,28 +300,32 @@ function Bookings(props) {
 
 export default Bookings;
 
-export async function getServerSideProps({ query }) {
-  const responseLoc = await fetch("http://localhost:8080/admin/locations", {
-    method: "GET",
-  });
-  const responseLocData = await responseLoc.json();
+// Handle token in request cookie to authorize server side GET requests
 
-  const selectedLoc = responseLocData.locations.find(
-    (loc) => loc.city.toLowerCase() === query.loc
-  );
+// export async function getServerSideProps({ query, req }) {
+//   const cookies = req.cookies;
+//   console.log({ cookies });
+//   const responseLoc = await fetch("http://localhost:8080/admin/locations", {
+//     method: "GET",
+//   });
+//   const responseLocData = await responseLoc.json();
 
-  if (!responseLocData.error) {
-    const response = await fetch(
-      `http://localhost:8080/bookings/calendar?locationId=${selectedLoc.id_location}`,
-      { method: "GET" }
-    );
-    const responseCalData = await response.json();
+//   const selectedLoc = responseLocData.locations.find(
+//     (loc) => loc.city.toLowerCase() === query.loc
+//   );
 
-    if (!responseCalData.error) {
-      const data = responseCalData.bookingData;
+//   if (!responseLocData.error) {
+//     const response = await fetch(
+//       `http://localhost:8080/bookings/calendar?locationId=${selectedLoc.id_location}`,
+//       { method: "GET" }
+//     );
+//     const responseCalData = await response.json();
 
-      return { props: { calendar: data, selectedLoc } };
-    } else return { props: { responseCalData, calendar: {}, selectedLoc: {} } };
-  }
-  return { props: { responseLocData, calendar: {}, selectedLoc: {} } };
-}
+//     if (!responseCalData.error) {
+//       const data = responseCalData.bookingData;
+
+//       return { props: { calendar: data, selectedLoc } };
+//     } else return { props: { responseCalData, calendar: {}, selectedLoc: {} } };
+//   }
+//   return { props: { responseLocData, calendar: {}, selectedLoc: {} } };
+// }

@@ -48,6 +48,22 @@ function AppStore(props) {
     }
   };
 
+  const getCalendar = async (locId) => {
+    const res = await sendRequest(
+      `http://localhost:8080/bookings/calendar?locationId=${locId}`,
+      "GET",
+      null,
+      {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      }
+    );
+    if (!res.error) {
+      console.log({ res });
+      return res.bookingData;
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userId = localStorage.getItem("userId");
@@ -76,6 +92,7 @@ function AppStore(props) {
         // SalonData
         locations,
         services,
+        getCalendar,
       }}
     >
       {/* {isLoggedIn ? children : <Login />} */}

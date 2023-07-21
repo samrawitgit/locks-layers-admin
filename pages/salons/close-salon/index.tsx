@@ -33,8 +33,8 @@ function CloseSalon(props) {
   });
 
   const location = useMemo(() => {
-    const selLocation = router.query.loc
-      ? locations.find((loc) => loc.city.toLowerCase() == router.query.loc)
+    const selLocation = router.query.locId
+      ? locations.find((loc) => loc.id_location == selLocation)
       : locations.find((loc) => loc.city === salon);
     if (selLocation) setSalon(selLocation.city);
     return selLocation;
