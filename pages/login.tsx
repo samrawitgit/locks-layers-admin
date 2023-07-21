@@ -53,9 +53,9 @@ const Login = (props) => {
       console.log({ resData });
 
       // only executes in case of res.ok
-      setIsLoggedIn(true);
       setUser(resData.userId);
       setToken(resData.token);
+      setIsLoggedIn(true);
       localStorage.setItem("token", resData.token);
       localStorage.setItem("userId", resData.userId);
       const remainingMilliseconds = 60 * 60 * 1000;

@@ -90,6 +90,8 @@ const Item = styled(Paper)(({ theme }) => ({
   color: theme.palette.text.secondary,
 }));
 
+//TODO: fix height changing when sandwich menu is open
+
 interface ILocation {
   road: string;
   number: string;
@@ -103,12 +105,12 @@ interface ILocation {
 
 const LocationDetails = (props) => {
   const router = useRouter();
-  const salonLocation = router.query.loc;
+  const salonLocation = router.query.locId;
   const { locations, services } = useContext(AppContext);
 
   const location = useMemo(() => {
     const selLocation = locations.find(
-      (loc) => loc.city.toLowerCase() == salonLocation[0]
+      (loc) => loc.id_location == salonLocation[0]
     );
     if (selLocation) {
       const parseBh = selLocation.business_hours.map((day) => {
@@ -126,7 +128,7 @@ const LocationDetails = (props) => {
         business_hours: parseBh,
       };
     }
-  }, [router]);
+  }, [salonLocation, locations]);
 
   const services_ = useMemo(() => {
     const services_ = services.map((s, i) => {
@@ -165,11 +167,11 @@ const LocationDetails = (props) => {
     return services_;
   }, [services]);
 
-  if (!locations.length || !location) {
+  if (!location || Object.keys(location).length < 1) {
     return <Typography>No data available</Typography>;
   }
 
-  console.log({ location, services, services_ });
+  // console.log({ location, services, services_ });
 
   return (
     <>
@@ -275,7 +277,7 @@ const LocationDetails = (props) => {
             component={NextLinkComposed}
             to={{
               pathname: "/salons/close-salon",
-              query: { loc: salonLocation },
+              query: { loc: location._id_location },
             }}
             variant="contained"
             endIcon={<WrongLocationOutlinedIcon />}
@@ -289,7 +291,7 @@ const LocationDetails = (props) => {
             component={NextLinkComposed}
             to={{
               pathname: "/salons/bookings",
-              query: { loc: salonLocation },
+              query: { loc: location.id_location },
             }}
             variant="contained"
             endIcon={<CalendarMonthOutlinedIcon />}
@@ -304,3 +306,25 @@ const LocationDetails = (props) => {
 };
 
 export default LocationDetails;
+
+// export async function getServerSideProps({ req, query }) {
+//   const response = await fetch("http://localhost:8080/admin/locations", {
+//     method: "GET",
+//   });
+//   const responseData = await response.json();
+//   console.log({ responseData });
+
+//   if (responseData)
+//   const selectedLoc = responseData.locations.find(
+//     (loc) => loc.id_location === query.locId
+//   );
+//   console.log({ selectedLoc });
+
+//   if (selectedLoc) {
+//     return {
+//       props: { selectedLoc },
+//     };
+//   } else {
+//     return { props: { selectedLoc: null } };
+//   }
+// }

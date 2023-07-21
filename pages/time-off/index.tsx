@@ -134,7 +134,7 @@ const TimeRangeComponent = (props) => {
 function TimeOff(props) {
   const router = useRouter();
 
-  const { locations, user } = useContext(AppContext);
+  const { locations, user, token } = useContext(AppContext);
   const { sendRequest } = useHttpClient();
   const { showPopUp } = useContext(PopUpContext);
 
@@ -169,6 +169,7 @@ function TimeOff(props) {
       },
       {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       }
     );
     if (closeLocRes.error) {

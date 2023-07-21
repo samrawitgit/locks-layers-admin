@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import { useRouter } from "next/router";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
@@ -10,14 +10,17 @@ import {
   ImageMarked,
   ImageSrc,
 } from "./StyledSalon";
+import { AppContext } from "@utils/index";
 
 const ButtonBases = (props) => {
   const { locationData } = props;
-  const { city, image_url } = locationData;
+  const { city, image_url, id_location } = locationData;
   const router = useRouter();
   const onClick = () => {
-    router.push(`/salons/${city.toLowerCase()}`);
+    router.push({ pathname: `/salons/${city}`, query: { locId: id_location } });
   };
+
+  // console.log({ locationData });
   return (
     <ImageButton
       onClick={onClick}
@@ -50,7 +53,11 @@ const ButtonBases = (props) => {
 };
 
 function Salons(props) {
-  const { locations } = props;
+  const { locations } = useContext(AppContext);
+
+  if (!locations) {
+    return <Typography>No data available</Typography>;
+  }
 
   return (
     <Grid
@@ -72,18 +79,18 @@ function Salons(props) {
 
 export default Salons;
 
-export async function getServerSideProps(context) {
-  const response = await fetch("http://localhost:8080/admin/locations", {
-    method: "GET",
-  });
-  const responseData = await response.json();
-  console.log({ responseData });
+// export async function getServerSideProps(context) {
+//   const response = await fetch("http://localhost:8080/admin/locations", {
+//     method: "GET",
+//   });
+//   const responseData = await response.json();
+//   console.log({ responseData });
 
-  if (responseData && responseData.locations.length) {
-    return {
-      props: { locations: responseData.locations },
-    };
-  } else {
-    return <Typography>No data available</Typography>;
-  }
-}
+//   if (responseData && responseData.locations.length) {
+//     return {
+//       props: { locations: responseData.locations },
+//     };
+//   } else {
+//     return { props: null };
+//   }
+// }
