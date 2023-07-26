@@ -1,4 +1,4 @@
-import React, { useMemo, useContext, useState } from "react";
+import React, { useMemo, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import {
@@ -8,6 +8,7 @@ import {
   TextField,
   Paper,
   Button,
+  Typography,
 } from "@mui/material";
 import dayjs, { Dayjs } from "dayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -16,12 +17,12 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AppContext } from "@utils/containers/app.container";
 import { useHttpClient } from "@utils/hooks/httpClient";
 import { PopUpContext } from "@utils/containers/pop-up.container";
+import { GetServerSideProps } from "next";
 
 const TODAY = dayjs();
 
 function CloseSalon(props) {
-  const router = useRouter();
-  const { locations, token } = useContext(AppContext);
+  const { location, allLocations, token } = props;
   const { sendRequest } = useHttpClient();
   const { showPopUp } = useContext(PopUpContext);
 
@@ -32,20 +33,16 @@ function CloseSalon(props) {
     endDate: false,
   });
 
-  const location = useMemo(() => {
-    const selLocation = router.query.locId
-      ? locations.find((loc) => loc.id_location == selLocation)
-      : locations.find((loc) => loc.city === salon);
-    if (selLocation) setSalon(selLocation.city);
-    return selLocation;
-  }, [locations, router, salon]);
+  useEffect(() => {
+    if (location && location.city) {
+      setSalon(location.city);
+    }
+  });
 
   const [reason, setReason] = useState("");
 
   const [startDate, setStartDate] = useState<Dayjs | null>(TODAY.add(1, "day"));
   const [endDate, setEndDate] = useState<Dayjs | null>(TODAY.add(2, "day"));
-
-  // console.log({ token, reason, location, q: router.query.loc });
 
   const onSubmit = async () => {
     console.log("submit!");
@@ -90,6 +87,10 @@ function CloseSalon(props) {
     setEndDate(null);
   };
 
+  if (!allLocations || !location || !token) {
+    return <Typography>No data available</Typography>;
+  }
+
   return (
     <div>
       <Head>
@@ -121,7 +122,7 @@ function CloseSalon(props) {
           <Autocomplete
             disablePortal
             id="combo-box-demo"
-            options={locations.map((loc) => loc.city)}
+            options={allLocations.map((loc) => loc.city)}
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -178,3 +179,69 @@ function CloseSalon(props) {
 }
 
 export default CloseSalon;
+
+export const getServerSideProps: GetServerSideProps = async ({
+  req,
+  query,
+}) => {
+  // Grabs the authentication cookie from the HTTP request
+  const accessToken = req.cookies["SID"];
+
+  // Checks if the authentication cookie is set in the request and if it's valid
+  // If it isn't, redirects the user to the login page
+  if (!accessToken) {
+    return {
+      redirect: {
+        destination: "/login",
+        permanent: false,
+      },
+    };
+  }
+
+  const locRes = await fetch("http://localhost:8080/admin/locations", {
+    method: "GET",
+    body: null,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  const locResData = await locRes.json();
+  console.log({ locRes });
+
+  if (locResData && locResData.locations.length) {
+    const selectedLoc = locResData.locations.find(
+      (loc) => loc.id_location.toString() === query.locId
+    );
+    if (selectedLoc) {
+      const parseBh = selectedLoc.business_hours.map((day) => {
+        if (day.opening_time && day.closing_time) {
+          return {
+            ...day,
+            opening_time: day.opening_time.slice(0, 5),
+            closing_time: day.closing_time.slice(0, 5),
+          };
+        }
+        return day;
+      });
+      const location = {
+        ...selectedLoc,
+        business_hours: parseBh,
+      };
+
+      return {
+        props: {
+          location,
+          allLocations: locResData.locations,
+          token: accessToken,
+          isLoggedIn: !!accessToken,
+        },
+      };
+    }
+    return {
+      props: { msg: "No selected Location", isLoggedIn: !!accessToken },
+    };
+  } else {
+    return { props: { msg: "No locations data", isLoggedIn: !!accessToken } };
+  }
+};

@@ -24,7 +24,7 @@ import PaletteOutlinedIcon from "@mui/icons-material/PaletteOutlined";
 import AirOutlinedIcon from "@mui/icons-material/AirOutlined";
 
 import NextLinkComposed from "../../components/NextLink/NextLink";
-import { AppContext } from "@utils/containers/app.container";
+import { GetServerSideProps } from "next";
 
 const commonData = {
   openingTime: "9",
@@ -104,33 +104,11 @@ interface ILocation {
 }
 
 const LocationDetails = (props) => {
-  const router = useRouter();
-  const salonLocation = router.query.locId;
-  const { locations, services } = useContext(AppContext);
-
-  const location = useMemo(() => {
-    const selLocation = locations.find(
-      (loc) => loc.id_location == salonLocation[0]
-    );
-    if (selLocation) {
-      const parseBh = selLocation.business_hours.map((day) => {
-        if (day.opening_time && day.closing_time) {
-          return {
-            ...day,
-            opening_time: day.opening_time.slice(0, 5),
-            closing_time: day.closing_time.slice(0, 5),
-          };
-        }
-        return day;
-      });
-      return {
-        ...selLocation,
-        business_hours: parseBh,
-      };
-    }
-  }, [salonLocation, locations]);
+  const { location, services } = props;
+  console.log({ location, services });
 
   const services_ = useMemo(() => {
+    if (!services) return;
     const services_ = services.map((s, i) => {
       let icon;
       switch (s.service_type) {
@@ -167,11 +145,14 @@ const LocationDetails = (props) => {
     return services_;
   }, [services]);
 
-  if (!location || Object.keys(location).length < 1) {
+  if (
+    !location ||
+    Object.keys(location).length < 1 ||
+    !services ||
+    services.length < 1
+  ) {
     return <Typography>No data available</Typography>;
   }
-
-  // console.log({ location, services, services_ });
 
   return (
     <>
@@ -277,7 +258,7 @@ const LocationDetails = (props) => {
             component={NextLinkComposed}
             to={{
               pathname: "/salons/close-salon",
-              query: { locId: location._id_location },
+              query: { locId: location.id_location },
             }}
             variant="contained"
             endIcon={<WrongLocationOutlinedIcon />}
@@ -307,24 +288,77 @@ const LocationDetails = (props) => {
 
 export default LocationDetails;
 
-// export async function getServerSideProps({ req, query }) {
-//   const response = await fetch("http://localhost:8080/admin/locations", {
-//     method: "GET",
-//   });
-//   const responseData = await response.json();
-//   console.log({ responseData });
+export const getServerSideProps: GetServerSideProps = async ({
+  req,
+  query,
+}) => {
+  // Grabs the authentication cookie from the HTTP request
+  const accessToken = req.cookies["SID"];
 
-//   if (responseData)
-//   const selectedLoc = responseData.locations.find(
-//     (loc) => loc.id_location === query.locId
-//   );
-//   console.log({ selectedLoc });
+  // Checks if the authentication cookie is set in the request and if it's valid
+  // If it isn't, redirects the user to the login page
+  if (!accessToken) {
+    return {
+      redirect: {
+        destination: "/login",
+        permanent: false,
+      },
+    };
+  }
 
-//   if (selectedLoc) {
-//     return {
-//       props: { selectedLoc },
-//     };
-//   } else {
-//     return { props: { selectedLoc: null } };
-//   }
-// }
+  const locRes = await fetch("http://localhost:8080/admin/locations", {
+    method: "GET",
+    body: null,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  const locResData = await locRes.json();
+  // console.log({ locRes });
+
+  if (locResData && locResData.locations.length) {
+    const selectedLoc = locResData.locations.find(
+      (loc) => loc.id_location.toString() === query.locId
+    );
+    if (selectedLoc) {
+      const parseBh = selectedLoc.business_hours.map((day) => {
+        if (day.opening_time && day.closing_time) {
+          return {
+            ...day,
+            opening_time: day.opening_time.slice(0, 5),
+            closing_time: day.closing_time.slice(0, 5),
+          };
+        }
+        return day;
+      });
+      const location = {
+        ...selectedLoc,
+        business_hours: parseBh,
+      };
+
+      const servRes = await fetch("http://localhost:8080/admin/services", {
+        method: "GET",
+        body: null,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      const servResData = await servRes.json();
+
+      if (servResData && servResData.services.length) {
+        return {
+          props: {
+            location,
+            services: servResData.services,
+            isLoggedIn: !!accessToken,
+          },
+        };
+      }
+    }
+    return { props: { isLoggedIn: !!accessToken } };
+  } else {
+    return { props: { isLoggedIn: !!accessToken } };
+  }
+};

@@ -1,4 +1,5 @@
-import { Component } from "react";
+import { Component, useContext } from "react";
+import App from "next/app";
 
 import { AppStore } from "@utils/containers/app.container";
 import { PopUpContainer } from "@utils/containers/pop-up.container";
@@ -52,17 +53,18 @@ class ErrorBoundary extends Component {
 }
 
 function MyApp({ Component, pageProps }) {
+  console.log({ pageProps });
   return (
     <AppStore>
-      <Layout>
+      <Layout {...pageProps}>
         <ErrorBoundary>
           <PopUpContainer>
             {/* <ErrorComponent /> */}
             {/*error={this.state.error} onHandle={this.errorHandler}*/}
             {/* <SessionProvider session={session}> */}
-            <RouteGuard>
-              <Component {...pageProps} />
-            </RouteGuard>
+            {/* <RouteGuard> */}
+            <Component {...pageProps} />
+            {/* </RouteGuard> */}
             {/* </SessionProvider> */}
           </PopUpContainer>
         </ErrorBoundary>

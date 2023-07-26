@@ -3,8 +3,10 @@ import { AppContext } from "@utils/containers/app.container";
 import Head from "next/head";
 import { Paper, Typography, Box, Button } from "@mui/material";
 import NextLinkComposed from "@components/NextLink/NextLink";
+import { GetServerSideProps } from "next";
 
 function HomePage(props) {
+  // console.log({ props });
   return (
     <div
       style={{
@@ -77,3 +79,28 @@ export default HomePage;
 //     props: { session },
 //   };
 // }
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  // Grabs the authentication cookie from the HTTP request
+  const accessToken = context.req.cookies["SID"];
+  // console.log({ accessToken });
+
+  // Checks if the authentication cookie is set in the request and if it's valid
+
+  // If it isn't, redirects the user to the login page
+  if (!accessToken) {
+    return {
+      redirect: {
+        destination: "/login",
+        permanent: false,
+      },
+    };
+  }
+
+  // In this example, we don't need the access token for anything on the client's side.
+  // If we did, we could either pass the access token to the client via props
+  // or we could decode the token, extract the data we need, and pass this data via props.
+  return {
+    props: { isLoggedIn: true },
+  };
+};

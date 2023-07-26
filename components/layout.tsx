@@ -1,8 +1,7 @@
-import React, { useContext } from "react";
+import React from "react";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 
 import Navbar from "./Navbar/Navbar";
-import { AppContext } from "@utils/containers/app.container";
 import Head from "next/head";
 
 const theme = createTheme({
@@ -16,8 +15,9 @@ const theme = createTheme({
   },
 });
 
-export default function Layout({ children }) {
-  const { isLoggedIn } = useContext(AppContext);
+export default function Layout(props) {
+  const { isLoggedIn, children } = props;
+  console.log("layout", { isLoggedIn });
   return (
     <ThemeProvider theme={theme}>
       {/* <div id="overlays" />

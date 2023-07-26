@@ -10,9 +10,20 @@ import Button from "@mui/material/Button";
 import Image from "next/image";
 import { useRouter } from "next/router";
 
-import { AppContext } from "@utils/containers/app.container";
 import NextLinkComposed from "../../components/NextLink/NextLink";
 import StyledNavbar from "./StyledNavbar";
+
+export const logoutFn = async (): Promise<any> => {
+  const response = await fetch(`/api/logout`, {
+    method: "GET",
+  });
+  console.log({ response });
+  if (!response.ok) {
+    throw new Error("Could not logout");
+  }
+  console.log({ response });
+  return response;
+};
 
 const pages = [
   { title: "Salons", route: "/salons" },
@@ -20,9 +31,8 @@ const pages = [
 ];
 const settings = ["Profile", "Account", "Dashboard", "Logout"];
 
-function Navbar() {
+function Navbar(props) {
   const router = useRouter();
-  const { isLoggedIn, setIsLoggedIn } = React.useContext(AppContext);
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
     null
   );
@@ -35,12 +45,21 @@ function Navbar() {
     setAnchorElNav(null);
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("expiryDate");
-    localStorage.removeItem("userId");
-    setIsLoggedIn(false);
-    router.replace("/login");
+  const logout = async () => {
+    // localStorage.removeItem("token");
+    // localStorage.removeItem("expiryDate");
+    // localStorage.removeItem("userId");
+    try {
+      const res = await logoutFn();
+      console.log({ res });
+      // setIsLoggedIn(false);
+      router.replace("/login");
+    } catch (err) {
+      console.log({ err });
+      alert("Seems you can't logout rn");
+    } finally {
+      // setIsLoading(false);
+    }
   };
 
   return (

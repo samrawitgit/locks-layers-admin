@@ -16,54 +16,6 @@ function AppStore(props) {
   const [locations, setLocations] = useState([]);
   const [services, setServices] = useState([]);
 
-  const getLocations = async () => {
-    const res = await sendRequest(
-      "http://localhost:8080/admin/locations",
-      "GET",
-      null,
-      {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      }
-    );
-    // console.log({ res });
-    if (!res.error) {
-      setLocations(res.locations);
-    }
-  };
-
-  const getServices = async () => {
-    const res = await sendRequest(
-      "http://localhost:8080/admin/services",
-      "GET",
-      null,
-      {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      }
-    );
-    // console.log({ res });
-    if (!res.error) {
-      setServices(res.services);
-    }
-  };
-
-  const getCalendar = async (locId) => {
-    const res = await sendRequest(
-      `http://localhost:8080/bookings/calendar?locationId=${locId}`,
-      "GET",
-      null,
-      {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      }
-    );
-    if (!res.error) {
-      console.log({ res });
-      return res.bookingData;
-    }
-  };
-
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userId = localStorage.getItem("userId");
@@ -71,8 +23,8 @@ function AppStore(props) {
       setToken(token);
       setUser(userId);
       setIsLoggedIn(true);
-      getLocations();
-      getServices();
+      // getLocations();
+      // getServices();
     }
   }, [isLoggedIn]);
 
@@ -90,9 +42,8 @@ function AppStore(props) {
         user,
         setUser,
         // SalonData
-        locations,
-        services,
-        getCalendar,
+        // locations,
+        // services,
       }}
     >
       {/* {isLoggedIn ? children : <Login />} */}

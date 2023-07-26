@@ -1,4 +1,4 @@
-import { useContext, useRef, useState } from "react";
+import { useContext, useRef, useState, FormEvent } from "react";
 import Head from "next/head";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
@@ -15,60 +15,114 @@ import {
   StyledInput,
   StyledButton,
 } from "./StyledLogin";
+import { GetServerSideProps } from "next";
+// import {
+//   AUTHENTICATION_COOKIE_NAME,
+//   AUTH_PROVIDER_BASE_URL,
+// } from "./api/login";
+
+export const loginFn = async (
+  userName: string,
+  password: string
+): Promise<Response> => {
+  const response = await fetch(`/api/login`, {
+    method: "POST",
+    body: JSON.stringify({ userName, password }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  console.log({ response });
+  if (!response.ok) {
+    throw new Error("Invalid credentials");
+  }
+  return response;
+};
 
 const Login = (props) => {
+  console.log({ props });
   const router = useRouter();
   const theme = useTheme();
-  const { isLoggedIn, setIsLoggedIn, token, setToken, user, setUser } =
-    useContext(AppContext);
   const { showPopUp, hidePopUp } = useContext(PopUpContext);
   const { sendRequest } = useHttpClient();
 
-  if (isLoggedIn) router.replace("/");
+  const [isLoading, setIsLoading] = useState(false);
 
   const userNameInputRef = useRef<HTMLInputElement>();
   const passwordInputRef = useRef<HTMLInputElement>();
 
-  const login = async (e) => {
+  const handleLogin = async (e) => {
+    console.log("clicked");
+    // Sets the isSubmittingState to true so the submit button
+    // gets disabled until the operation completes.
+    setIsLoading(true);
+
+    // Prevents the form submission from reloading the page.
     e.preventDefault();
-    console.log(userNameInputRef.current.value);
+
+    if (!userNameInputRef.current.value || !passwordInputRef.current.value) {
+      showPopUp({
+        title: "Wrong credentials",
+        content: "Insert valid credentials",
+      });
+      return;
+    }
     try {
-      if (!userNameInputRef.current.value || !passwordInputRef.current.value) {
-        showPopUp({
-          title: "Wrong credentials",
-          content: "Insert valid credentials",
-        });
-        return;
-      }
-
-      const resData = await sendRequest(
-        "http://localhost:8080/auth/admin-login",
-        "POST",
-        {
-          userName: userNameInputRef.current?.value,
-          password: passwordInputRef.current?.value,
-        },
-        {
-          "Content-type": "application/json",
-        }
+      const loginRes = await loginFn(
+        userNameInputRef.current.value,
+        passwordInputRef.current.value
       );
-      console.log({ resData });
-
-      // only executes in case of res.ok
-      setUser(resData.userId);
-      setToken(resData.token);
-      setIsLoggedIn(true);
-      localStorage.setItem("token", resData.token);
-      localStorage.setItem("userId", resData.userId);
-      const remainingMilliseconds = 60 * 60 * 1000;
-      const expiryDate = new Date(new Date().getTime() + remainingMilliseconds);
-      localStorage.setItem("expiryDate", expiryDate.toISOString());
-      router.push("/");
+      if (loginRes.ok) {
+        router.push("/");
+      }
     } catch (err) {
-      console.log(err);
-      showPopUp({ title: "Failed to authenticate", content: "try again" });
+      console.log({ err });
+      alert("Seems your credentials are invalid client");
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  // const login = async (e) => {
+  //   e.preventDefault();
+  //   console.log(userNameInputRef.current.value);
+  //   try {
+  //     if (!userNameInputRef.current.value || !passwordInputRef.current.value) {
+  //       showPopUp({
+  //         title: "Wrong credentials",
+  //         content: "Insert valid credentials",
+  //       });
+  //       return;
+  //     }
+
+  //     const resData = await sendRequest(
+  //       "http://localhost:8080/auth/admin-login",
+  //       "POST",
+  //       {
+  //         userName: userNameInputRef.current?.value,
+  //         password: passwordInputRef.current?.value,
+  //       },
+  //       {
+  //         "Content-type": "application/json",
+  //       }
+  //     );
+  //     console.log({ resData });
+
+  //     // only executes in case of res.ok
+  //     setUser(resData.userId);
+  //     setToken(resData.token);
+  //     setIsLoggedIn(true);
+  //     localStorage.setItem("token", resData.token);
+  //     localStorage.setItem("userId", resData.userId);
+  //     const remainingMilliseconds = 60 * 60 * 1000;
+  //     const expiryDate = new Date(new Date().getTime() + remainingMilliseconds);
+  //     localStorage.setItem("expiryDate", expiryDate.toISOString());
+  //     router.push("/");
+  //   } catch (err) {
+  //     console.log(err);
+  //     showPopUp({ title: "Failed to authenticate", content: "try again" });
+  //   }
+  // };
   // console.log({ user, token, isLoggedIn });
 
   return (
@@ -119,7 +173,7 @@ const Login = (props) => {
               inputRef={passwordInputRef}
               required
             />
-            <StyledButton onClick={login}>Login</StyledButton>
+            <StyledButton onClick={handleLogin}>Login</StyledButton>
           </StyledFormGroup>
         </CardContent>
       </Card>
@@ -128,3 +182,25 @@ const Login = (props) => {
 };
 
 export default Login;
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  // Grabs the authentication cookie from the HTTP request
+  const accessToken = context.req.cookies["SID"];
+
+  // If it is, redirects the user to the homepage
+  if (accessToken) {
+    return {
+      redirect: {
+        destination: "/",
+        permanent: false,
+      },
+    };
+  }
+
+  // In this example, we don't need the access token for anything on the client's side.
+  // If we did, we could either pass the access token to the client via props
+  // or we could decode the token, extract the data we need, and pass this data via props.
+  return {
+    props: { isLoggedIn: false },
+  };
+};

@@ -24,8 +24,9 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-import { AppContext, PopUpContext } from "@utils/index";
+import { PopUpContext } from "@utils/index";
 import { useRouter } from "next/router";
+import { GetServerSideProps } from "next";
 
 const TODAY = dayjs();
 
@@ -119,12 +120,11 @@ function ServerDay(
 }
 
 function Bookings(props) {
-  // const { responseLocData, responseCalData, selectedLoc, calendar } = props; // from serversideprops
+  const { calendarData } = props;
+  console.log({ calendarData });
   const router = useRouter();
   console.log({ router, p: router.asPath });
-  const locId = parseInt(router.asPath.split("?")[1].split("=")[1]);
   const { showPopUp } = useContext(PopUpContext);
-  const { locations, getCalendar } = useContext(AppContext);
 
   const [isLoading, setIsLoading] = useState(true);
   const [highlightedDays, setHighlightedDays] = useState([]);
@@ -133,25 +133,10 @@ function Bookings(props) {
 
   const [calendar, setCalendar] = useState([]);
 
-  const selectedLoc = useMemo(() => {
-    console.log({ locId });
-    const selLocation = locations.find((loc) => loc.id_location == locId);
-    if (selLocation) {
-      getCalendar(selLocation.id_location)
-        .then((data) => {
-          setCalendar(data);
-        })
-        .catch((err) => console.log({ err }));
-      // const calendar = await getCalendar(selLocation.id_location);
-      // setCalendar(calendar);
-    }
-    return selLocation;
-  }, [router, locations]);
-
-  const bookingData = useMemo(() => {
-    if (!_isEmpty(calendar)) {
-      return _reduce(
-        calendar,
+  useEffect(() => {
+    if (calendarData) {
+      const bookData = _reduce(
+        calendarData,
         (acc, val, key) => {
           val = val.map((b) => ({
             ...b,
@@ -162,13 +147,14 @@ function Bookings(props) {
         },
         {}
       );
+      setCalendar(bookData);
+      fetchHighlightedDays(TODAY.format("MM-YYYY"), bookData);
     }
-    return {};
-  }, [calendar]);
+  }, [calendarData]);
 
-  console.log({ calendar, bookingData });
   const fetchHighlightedDays = React.useCallback(
-    (newMonth: string) => {
+    (newMonth: string, bookingData = calendar) => {
+      // console.log({ bookingData });
       setIsLoading(true);
       if (!_isEmpty(bookingData) && bookingData[newMonth]) {
         const highDays = _uniq(
@@ -182,17 +168,8 @@ function Bookings(props) {
       }
       setIsLoading(false);
     },
-    [selectedLoc, bookingData]
+    [calendar]
   );
-
-  useEffect(() => {
-    // if (calendar && responseLocData.error) {
-    //   return showPopUp({ title: "Error", content: responseLocData.message });
-    // } else if (responseCalData && responseCalData.error) {
-    //   return showPopUp({ title: "Error", content: responseCalData.message });
-    // }
-    fetchHighlightedDays(TODAY.format("MM-YYYY"));
-  }, [bookingData]);
 
   const toggleDrawer = (event: React.KeyboardEvent | React.MouseEvent) => {
     if (
@@ -286,7 +263,7 @@ function Bookings(props) {
           <DayDetails
             bookingsData={
               dayjs.isDayjs(datePicked)
-                ? bookingData[datePicked.format("MM-YYYY")].filter(
+                ? calendar[datePicked.format("MM-YYYY")].filter(
                     ({ booking_date }) => datePicked.isSame(booking_date, "day")
                   )
                 : []
@@ -302,30 +279,45 @@ export default Bookings;
 
 // Handle token in request cookie to authorize server side GET requests
 
-// export async function getServerSideProps({ query, req }) {
-//   const cookies = req.cookies;
-//   console.log({ cookies });
-//   const responseLoc = await fetch("http://localhost:8080/admin/locations", {
-//     method: "GET",
-//   });
-//   const responseLocData = await responseLoc.json();
+export const getServerSideProps: GetServerSideProps = async ({
+  req,
+  query,
+}) => {
+  // Grabs the authentication cookie from the HTTP request
+  const accessToken = req.cookies["SID"];
 
-//   const selectedLoc = responseLocData.locations.find(
-//     (loc) => loc.city.toLowerCase() === query.loc
-//   );
+  // Checks if the authentication cookie is set in the request and if it's valid
+  // If it isn't, redirects the user to the login page
+  if (!accessToken) {
+    return {
+      redirect: {
+        destination: "/login",
+        permanent: false,
+      },
+    };
+  }
 
-//   if (!responseLocData.error) {
-//     const response = await fetch(
-//       `http://localhost:8080/bookings/calendar?locationId=${selectedLoc.id_location}`,
-//       { method: "GET" }
-//     );
-//     const responseCalData = await response.json();
-
-//     if (!responseCalData.error) {
-//       const data = responseCalData.bookingData;
-
-//       return { props: { calendar: data, selectedLoc } };
-//     } else return { props: { responseCalData, calendar: {}, selectedLoc: {} } };
-//   }
-//   return { props: { responseLocData, calendar: {}, selectedLoc: {} } };
-// }
+  const calendarRes = await fetch(
+    `http://localhost:8080/bookings/calendar?locationId=${query.locId}`,
+    {
+      method: "GET",
+      body: null,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+  const calendarResData = await calendarRes.json();
+  if (calendarResData && calendarResData.bookingData) {
+    console.log({ book: calendarResData.bookingData });
+    return {
+      props: {
+        calendarData: calendarResData.bookingData,
+        isLoggedIn: !!accessToken,
+      },
+    };
+  } else {
+    return { props: { msg: "No locations data", isLoggedIn: !!accessToken } };
+  }
+};
