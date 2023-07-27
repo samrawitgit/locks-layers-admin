@@ -1,25 +1,20 @@
-// import { NextRequest, NextResponse } from "next";
-
-import { cookies } from "next/headers";
 import { AUTHENTICATION_COOKIE_NAME } from "./login";
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextApiRequest, NextApiResponse } from "next";
+import { serialize } from "cookie";
 
-export default async function handleLogout(request: NextRequest, res) {
-  // console.log({ cook: req.cookies });
+export default async function handleLogout(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   try {
-    // req.cookies.clear();
-    // console.log("api/logout", { request });
-    // request.cookies.delete(AUTHENTICATION_COOKIE_NAME);
-    // const response = NextResponse.next();
-    // response.cookies.delete(AUTHENTICATION_COOKIE_NAME);
-    // cookies().set({
-    //   name: AUTHENTICATION_COOKIE_NAME,
-    //   value: "",
-    //   expires: new Date("2016-10-05"),
-    //   path: "/", // For all paths
-    // });
-    return res.status(200).send({ mes: "bye" });
+    res.setHeader("Set-Cookie", [
+      serialize(AUTHENTICATION_COOKIE_NAME, ""),
+      serialize("UID", ""),
+    ]);
+    // res.writeHead(302, { Location: "/login" });
+    // res.end();
+
+    return res.status(200).send(null);
   } catch (err) {
     console.log({ err });
     return res.status(500).send({ msg: "cannot logout soz" });

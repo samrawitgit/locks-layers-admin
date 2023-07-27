@@ -1,47 +1,72 @@
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextRequest } from "next/server";
+
+// EXAMPLE   https://www.streaver.com/blog/posts/implementing-the-authentication-layer-in-nextjs
 
 export function middleware(request: NextRequest) {
-  // Assume a "Cookie:nextjs=fast" header to be present on the incoming request
-  // Getting cookies from the request using the `RequestCookies` API
-  let cookie = request.cookies.get("nextjs");
-  // console.log(cookie); // => { name: 'nextjs', value: 'fast', Path: '/' }
-  const allCookiesReq = request.cookies.getAll();
+  const tokenCookie = request.cookies.get("SID");
+  const userIdCookie = request.cookies.get("UID");
+
+  // You can also set request headers in NextResponse.rewrite
   const response = NextResponse.next();
-  const allCookiesRes = response.cookies.getAll();
-  // console.log({ allCookiesReq, allCookiesRes }); // => [{ name: 'nextjs', value: 'fast' }]
-
-  request.cookies.has("nextjs"); // => true
-  request.cookies.delete("nextjs");
-  request.cookies.has("nextjs"); // => false
-
-  // Setting cookies on the response using the `ResponseCookies` API
-  // response.cookies.set("vercel", "fast");
-  // response.cookies.set({
-  //   name: "vercel",
-  //   value: "fast",
-  //   path: "/",
-  // });
-  // cookie = response.cookies.get("vercel");
-  // console.log(cookie); // => { name: 'vercel', value: 'fast', Path: '/' }
-  // The outgoing response will have a `Set-Cookie:vercel=fast;path=/test` header.
-
-  const authCookie = request.cookies.get("SID");
-  // if (Object.keys(authCookie).length < 1) return false;
-
-  console.log({ authCookie });
-  if (request.url === "http://localhost:3000/api/logout") {
+  if (request.nextUrl.pathname === "/api/logout") {
     response.cookies.delete("SID");
+    response.cookies.delete("UID");
+    response.cookies.delete("token");
+    response.cookies.delete("userId");
+    return response;
   } else {
-    if (authCookie) {
-      response.cookies.set("SID", authCookie.value);
+    if (request.cookies.has("userId") && request.cookies.has("token")) {
+      const tokenCookie_ = request.cookies.get("token");
+      const userIdCookie_ = request.cookies.get("userId");
+      response.cookies.set({ ...tokenCookie_, name: "SID" });
+      response.cookies.set({ ...userIdCookie_, name: "UID" });
+    } else if (request.cookies.has("SID") && request.cookies.has("UID")) {
+      response.cookies.set({ ...tokenCookie });
+      response.cookies.set({ ...userIdCookie });
     }
+    response.cookies.delete("token");
+    response.cookies.delete("userId");
+    return response;
   }
-  // console.log({ authCookie /* , resCookie: response.cookies.getAll() */ });
 
-  return response;
+  // if (request.nextUrl.pathname === "/api/logout") {
+  //   console.log("middle logout", {
+  //     allCookiesReqIn,
+  //     url: request.nextUrl.pathname,
+  //   });
+  //   response.cookies.delete("SID");
+  //   response.cookies.delete("UID");
+  // } else if (request.nextUrl.pathname !== "/api/login") {
+  //   const tokenCookie = request.cookies.get("SID");
+  //   const userIdCookie = request.cookies.get("UID");
+  //   const allCookiesReq = request.cookies.getAll();
+  //   console.log("middle not logout/login", {
+  //     allCookiesReq,
+  //     url: request.nextUrl.pathname,
+  //   });
+  //   if (request.cookies.has("SID") && request.cookies.has("UID")) {
+  //     console.log("middle not logout & cookies present");
+  //     // console.log("middle not login & cookies present", {
+  //     //   allCookiesReq,
+  //     //   tokenCookie,
+  //     //   userIdCookie,
+  //     //   url: request.nextUrl.pathname,
+  //     // });
+  //     response.cookies.set("SID", tokenCookie.value);
+  //     response.cookies.set("UID", userIdCookie.value);
+  //   }
+  // } else {
+  //   const allCookiesReq = request.cookies.getAll();
+  //   console.log("middle /api/login", {
+  //     allCookiesReq,
+  //     url: request.nextUrl.pathname,
+  //   });
+  // }
+
+  // console.log({ authCookie /* , resCookie: response.cookies.getAll() */ });
 }
 
 // export const config = {
-//   matcher: ["/api/login"],
+//   matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 // };

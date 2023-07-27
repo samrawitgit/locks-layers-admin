@@ -16,17 +16,17 @@ function AppStore(props) {
   const [locations, setLocations] = useState([]);
   const [services, setServices] = useState([]);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userId = localStorage.getItem("userId");
-    if (token && userId) {
-      setToken(token);
-      setUser(userId);
-      setIsLoggedIn(true);
-      // getLocations();
-      // getServices();
-    }
-  }, [isLoggedIn]);
+  // useEffect(() => {
+  //   // const token = localStorage.getItem("token");
+  //   // const userId = localStorage.getItem("userId");
+  //   if (token && userId) {
+  //     setToken(token);
+  //     setUser(userId);
+  //     setIsLoggedIn(true);
+  //     // getLocations();
+  //     // getServices();
+  //   }
+  // }, [isLoggedIn]);
 
   // TODO: redirect -> https://jasonwatmore.com/post/2021/08/30/next-js-redirect-to-login-page-if-unauthenticated
 

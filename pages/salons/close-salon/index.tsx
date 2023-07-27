@@ -14,7 +14,6 @@ import dayjs, { Dayjs } from "dayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { AppContext } from "@utils/containers/app.container";
 import { useHttpClient } from "@utils/hooks/httpClient";
 import { PopUpContext } from "@utils/containers/pop-up.container";
 import { GetServerSideProps } from "next";
@@ -23,6 +22,7 @@ const TODAY = dayjs();
 
 function CloseSalon(props) {
   const { location, allLocations, token } = props;
+  const router = useRouter();
   const { sendRequest } = useHttpClient();
   const { showPopUp } = useContext(PopUpContext);
 
@@ -79,6 +79,7 @@ function CloseSalon(props) {
     showPopUp({
       title: closeLocRes.error ? "Error" : "Success!",
       content: closeLocRes.message,
+      onClose: () => (closeLocRes.error ? {} : router.push("/salons")),
     });
     if (!closeLocRes.error) {
       setReason("");
@@ -102,7 +103,7 @@ function CloseSalon(props) {
       </Head>
       <Paper variant="outlined" sx={{ mt: 3, px: 10, py: 5, m: 10 }}>
         <FormLabel
-          component="h2"
+          component="h3"
           sx={{
             w: "100%",
             fontSize: "25px",

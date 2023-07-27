@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // import { AppContext } from "@utils/containers/app.container";
 
@@ -7,7 +7,6 @@ const URL = "http://localhost:8080";
 export const useHttpClient = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<any>();
-  // const { error, setError } = useContext(AppContext);
 
   const activeHttpRequests = useRef<any[]>([]);
 
@@ -29,7 +28,7 @@ export const useHttpClient = () => {
         activeHttpRequests.current = activeHttpRequests.current.filter(
           (reqCtrl) => reqCtrl !== httpAbortCtrll
         );
-        // console.log({ response, responseData });
+        console.log({ response, responseData });
 
         if (!response.ok) {
           // throw new Error(responseData.message);

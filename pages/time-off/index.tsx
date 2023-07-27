@@ -15,6 +15,7 @@ import {
   FormControlLabel,
   Radio,
   Stack,
+  Typography,
 } from "@mui/material";
 import {
   LocalizationProvider,
@@ -23,6 +24,7 @@ import {
 } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { AppContext, useHttpClient, PopUpContext } from "@utils/index";
+import { GetServerSideProps } from "next";
 
 const locationsOld = ["torino", "milano", "roma"];
 
@@ -132,13 +134,13 @@ const TimeRangeComponent = (props) => {
 };
 
 function TimeOff(props) {
+  const { locations, user, token } = props;
   const router = useRouter();
 
-  const { locations, user, token } = useContext(AppContext);
   const { sendRequest } = useHttpClient();
   const { showPopUp } = useContext(PopUpContext);
 
-  console.log({ locations, user });
+  // console.log({ locations, user, token });
 
   const [locationValue, setLocationValue] = React.useState<string | null>(null);
 
@@ -182,10 +184,15 @@ function TimeOff(props) {
     });
   };
 
+  if (!locations || !token || !user) {
+    return <Typography>No data available</Typography>;
+  }
+
   return (
     <div>
       <Head>
         <title>Locks&Layers</title>
+        <link rel="shortcut icon" href="/favicon.ico" />
         <meta
           name="description"
           content="Locks&Layers staff time off request form"
@@ -193,7 +200,7 @@ function TimeOff(props) {
       </Head>
       <Paper variant="outlined" sx={{ mt: 3, px: 10, py: 5, m: 10 }}>
         <FormLabel
-          component="h2"
+          component="h3"
           sx={{
             w: "100%",
             fontSize: "25px",
@@ -310,3 +317,46 @@ function TimeOff(props) {
 }
 
 export default TimeOff;
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  // Grabs the authentication cookie from the HTTP request
+  const accessToken = context.req.cookies["SID"];
+  const userId = context.req.cookies["UID"];
+  // console.log({ accessToken });
+
+  // Checks if the authentication cookie is set in the request and if it's valid
+  // If it isn't, redirects the user to the login page
+  if (!accessToken) {
+    return {
+      redirect: {
+        destination: "/login",
+        permanent: false,
+      },
+    };
+  }
+
+  const response = await fetch("http://localhost:8080/admin/locations", {
+    method: "GET",
+    body: null,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  const responseData = await response.json();
+  // console.log({ response });
+
+  // Send isLoggedIn for navbar settings
+  if (responseData && responseData.locations.length) {
+    return {
+      props: {
+        locations: responseData.locations,
+        token: accessToken,
+        user: userId,
+        isLoggedIn: !!accessToken,
+      },
+    };
+  } else {
+    return { props: null, isLoggedIn: !!accessToken };
+  }
+};

@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { useContext } from "react";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 import IconButton from "@mui/material/IconButton";
@@ -12,6 +12,7 @@ import { useRouter } from "next/router";
 
 import NextLinkComposed from "../../components/NextLink/NextLink";
 import StyledNavbar from "./StyledNavbar";
+import { PopUpContext } from "@utils/index";
 
 export const logoutFn = async (): Promise<any> => {
   const response = await fetch(`/api/logout`, {
@@ -33,6 +34,8 @@ const settings = ["Profile", "Account", "Dashboard", "Logout"];
 
 function Navbar(props) {
   const router = useRouter();
+  const { showPopUp } = useContext(PopUpContext);
+
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
     null
   );
@@ -53,10 +56,10 @@ function Navbar(props) {
       const res = await logoutFn();
       console.log({ res });
       // setIsLoggedIn(false);
-      router.replace("/login");
+      router.push("/login");
     } catch (err) {
       console.log({ err });
-      alert("Seems you can't logout rn");
+      showPopUp({ title: "Logout failed", content: "try again" });
     } finally {
       // setIsLoading(false);
     }

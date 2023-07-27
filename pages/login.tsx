@@ -40,11 +40,9 @@ export const loginFn = async (
 };
 
 const Login = (props) => {
-  console.log({ props });
   const router = useRouter();
   const theme = useTheme();
-  const { showPopUp, hidePopUp } = useContext(PopUpContext);
-  const { sendRequest } = useHttpClient();
+  const { showPopUp } = useContext(PopUpContext);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -77,7 +75,7 @@ const Login = (props) => {
       }
     } catch (err) {
       console.log({ err });
-      alert("Seems your credentials are invalid client");
+      showPopUp({ title: "Failed to authenticate", content: "try again" });
     } finally {
       setIsLoading(false);
     }

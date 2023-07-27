@@ -24,7 +24,6 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-import { PopUpContext } from "@utils/index";
 import { useRouter } from "next/router";
 import { GetServerSideProps } from "next";
 
@@ -123,8 +122,6 @@ function Bookings(props) {
   const { calendarData } = props;
   console.log({ calendarData });
   const router = useRouter();
-  console.log({ router, p: router.asPath });
-  const { showPopUp } = useContext(PopUpContext);
 
   const [isLoading, setIsLoading] = useState(true);
   const [highlightedDays, setHighlightedDays] = useState([]);
@@ -188,9 +185,11 @@ function Bookings(props) {
         <title>Locks&Layers</title>
         <meta name="description" content="Locks&Layers bookings schedule" />
       </Head>
-      <h1>Bookings</h1>
+      <Typography variant="h3" sx={{ textAlign: "center", my: 6 }}>
+        Bookings
+      </Typography>
 
-      <Container sx={{ width: "600px", height: "1000px" }}>
+      <Container sx={{ width: "600px", height: "700px" }}>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <DateCalendar
             showDaysOutsideCurrentMonth={false}
@@ -308,6 +307,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       },
     }
   );
+  // console.log({ calendarRes, accessToken });
   const calendarResData = await calendarRes.json();
   if (calendarResData && calendarResData.bookingData) {
     console.log({ book: calendarResData.bookingData });

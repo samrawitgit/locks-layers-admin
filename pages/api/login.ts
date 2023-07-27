@@ -1,7 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { NextRequest, NextResponse } from "next/server";
-import cookie from "cookie";
-import { cookies } from "next/headers";
+import { serialize } from "cookie";
 
 export const AUTH_PROVIDER_BASE_URL = "http://localhost:8080";
 const ONE_HR_IN_MS = 60 * 60 * 1000;
@@ -14,7 +12,10 @@ export const AUTHENTICATION_COOKIE_OPTIONS = {
   maxAge: ONE_HR_IN_MS,
 };
 
-export default async function handleLogin(req: NextRequest, res) {
+export default async function handleLogin(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   // Makes sure it's a POST request.
   if (req.method !== "POST") {
     return res.status(404).json({ message: "not found" });
@@ -26,7 +27,7 @@ export default async function handleLogin(req: NextRequest, res) {
 
   try {
     // Calls the authentication provider to log in.
-    const loginResponse = await fetch(
+    const loginResponse: Response = await fetch(
       `${AUTH_PROVIDER_BASE_URL}/auth/admin-login`,
       {
         method: "POST",
@@ -43,32 +44,15 @@ export default async function handleLogin(req: NextRequest, res) {
     }
 
     // Reads the access token
-    const { token } = await loginResponse.json(); /* as LoginResponseBody;*/
-    console.log({ token });
+    const loginResData = await loginResponse.json();
 
-    // Sets the access token as a cookie into the HTTP response
-    res.setHeader(
-      "Set-Cookie",
-      cookie.serialize(
-        AUTHENTICATION_COOKIE_NAME,
-        token,
-        AUTHENTICATION_COOKIE_OPTIONS
-      )
-    );
-    // res.cookies.set(
-    //   AUTHENTICATION_COOKIE_NAME,
-    //   cookie.serialize(token, AUTHENTICATION_COOKIE_OPTIONS)
-    // );
+    const { token, userId } = loginResData; /* as LoginResponseBody;*/
 
-    // console.log({ reqCook: req.cookies.getAll() });
-
-    // let response = NextResponse.next();
-    // // Set a cookie to hide the banner
-    // response.cookies.set(
-    //   AUTHENTICATION_COOKIE_NAME,
-    //   token,
-    //   AUTHENTICATION_COOKIE_OPTIONS
-    // );
+    // Sets the access token & userId as a cookie into the HTTP response
+    res.setHeader("Set-Cookie", [
+      serialize("SID", token, AUTHENTICATION_COOKIE_OPTIONS),
+      serialize("UID", userId, AUTHENTICATION_COOKIE_OPTIONS),
+    ]);
 
     return res.status(204).send(null); //200
   } catch (e) {

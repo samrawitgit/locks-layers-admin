@@ -80,26 +80,10 @@ function Salons(props) {
 
 export default Salons;
 
-// export async function getServerSideProps(context) {
-//   const response = await fetch("http://localhost:8080/admin/locations", {
-//     method: "GET",
-//   });
-//   const responseData = await response.json();
-//   console.log({ responseData });
-
-//   if (responseData && responseData.locations.length) {
-//     return {
-//       props: { locations: responseData.locations },
-//     };
-//   } else {
-//     return { props: null };
-//   }
-// }
-
 export const getServerSideProps: GetServerSideProps = async (context) => {
   // Grabs the authentication cookie from the HTTP request
   const accessToken = context.req.cookies["SID"];
-  console.log({ accessToken });
+  // console.log({ accessToken });
 
   // Checks if the authentication cookie is set in the request and if it's valid
   // If it isn't, redirects the user to the login page
@@ -121,7 +105,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     },
   });
   const responseData = await response.json();
-  console.log({ response });
+  // console.log({ response });
 
   // Send isLoggedIn for navbar settings
   if (responseData && responseData.locations.length) {

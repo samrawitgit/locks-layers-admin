@@ -1,5 +1,5 @@
 import React from "react";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { createTheme, ThemeProvider, styled } from "@mui/material/styles";
 
 import Navbar from "./Navbar/Navbar";
 import Head from "next/head";
@@ -15,9 +15,19 @@ const theme = createTheme({
   },
 });
 
+const StyledMain = styled("main")({
+  "@font-face": {
+    fontFamily: "specialFont",
+    src: 'url("/fonts/locks-layers-playfair-display-regular.ttf")',
+  },
+
+  h3: {
+    fontFamily: "specialFont",
+  },
+});
+
 export default function Layout(props) {
   const { isLoggedIn, children } = props;
-  console.log("layout", { isLoggedIn });
   return (
     <ThemeProvider theme={theme}>
       {/* <div id="overlays" />
@@ -25,9 +35,10 @@ export default function Layout(props) {
       <Head>
         <title>Locks&Layers</title>
         <meta name="description" content="Locks&Layers locations" />
+        <link rel="shortcut icon" href="/favicon.png" />
       </Head>
       {isLoggedIn && <Navbar />}
-      <main>{children}</main>
+      <StyledMain>{children}</StyledMain>
     </ThemeProvider>
   );
 }

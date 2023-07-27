@@ -53,12 +53,11 @@ class ErrorBoundary extends Component {
 }
 
 function MyApp({ Component, pageProps }) {
-  console.log({ pageProps });
   return (
     <AppStore>
-      <Layout {...pageProps}>
-        <ErrorBoundary>
-          <PopUpContainer>
+      <PopUpContainer>
+        <Layout {...pageProps}>
+          <ErrorBoundary>
             {/* <ErrorComponent /> */}
             {/*error={this.state.error} onHandle={this.errorHandler}*/}
             {/* <SessionProvider session={session}> */}
@@ -66,9 +65,9 @@ function MyApp({ Component, pageProps }) {
             <Component {...pageProps} />
             {/* </RouteGuard> */}
             {/* </SessionProvider> */}
-          </PopUpContainer>
-        </ErrorBoundary>
-      </Layout>
+          </ErrorBoundary>
+        </Layout>
+      </PopUpContainer>
     </AppStore>
   );
 }
