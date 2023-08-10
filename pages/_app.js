@@ -4,51 +4,49 @@ import App from "next/app";
 import { AppStore } from "@utils/containers/app.container";
 import { PopUpContainer } from "@utils/containers/pop-up.container";
 import Layout from "@components/layout";
-import ErrorComponent from "@components/ErrorComponent/ErrorComponent";
-import { RouteGuard } from "@components/RouteGuard";
-// import { SessionProvider } from "next-auth/react";
-
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      hasError: false,
-    };
+    this.state = { hasError: false };
   }
 
-  componentDidCatch(error, errorInfo) {
-    const error_ = `${error.stack} \n ${errorInfo.componentStack}`;
-    // mediumLevel.debug.log(error_).then();
-    this.setState({ hasError: error_ });
+  static getDerivedStateFromError(error) {
+    // Update state so the next render will show the error UI.
+    return { hasError: true };
   }
 
-  /* <AppStore>
-    <Layout>
-      <ErrorComponent onCancel={this.setState({ hasError: false })} />
-    </Layout>
-  </AppStore> */
+  componentDidCatch(error, info) {
+    // Example "componentStack":
+    //   in ComponentThatThrows (created by App)
+    //   in ErrorBoundary (created by App)
+    //   in div (created by App)
+    //   in App
+    logErrorToMyService(error, info.componentStack);
+    // ---------OLD------
+    // const error_ = `${error.stack} \n ${errorInfo.componentStack}`;
+    // // mediumLevel.debug.log(error_).then();
+    // this.setState({ hasError: error_ });
+  }
 
   render() {
-    return (
-      <>
-        {this.state.hasError ? (
-          <div>
-            <h2>Oops, there is an error!</h2>
-            <button
-              type="button"
-              onClick={() => {
-                this.setState({ hasError: false });
-                window.location.reload();
-              }}
-            >
-              Try again?
-            </button>
-          </div>
-        ) : (
-          this.props.children
-        )}
-      </>
-    );
+    if (this.state.hasError) {
+      return (
+        <div>
+          <h2>Oops, there is an error!</h2>
+          <button
+            type="button"
+            onClick={() => {
+              this.setState({ hasError: false });
+              window.location.reload();
+            }}
+          >
+            Try again?
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
   }
 }
 

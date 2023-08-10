@@ -9,7 +9,7 @@ import {
   ImageButton,
   ImageMarked,
   ImageSrc,
-} from "./StyledSalon";
+} from "../../public/css/StyledSalon";
 import { GetServerSideProps } from "next";
 
 const ButtonBases = (props) => {
@@ -96,7 +96,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
 
-  const response = await fetch("http://localhost:8080/admin/locations", {
+  const response = await fetch(`${process.env.backend_url}/admin/locations`, {
     method: "GET",
     body: null,
     headers: {

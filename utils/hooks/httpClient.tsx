@@ -2,8 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 // import { AppContext } from "@utils/containers/app.container";
 
-const URL = "http://localhost:8080";
-
 export const useHttpClient = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<any>();

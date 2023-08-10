@@ -14,12 +14,8 @@ import {
   StyledInputLabel,
   StyledInput,
   StyledButton,
-} from "./StyledLogin";
+} from "../public/css/StyledLogin";
 import { GetServerSideProps } from "next";
-// import {
-//   AUTHENTICATION_COOKIE_NAME,
-//   AUTH_PROVIDER_BASE_URL,
-// } from "./api/login";
 
 export const loginFn = async (
   userName: string,

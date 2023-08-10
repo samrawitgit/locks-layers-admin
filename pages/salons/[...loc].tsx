@@ -306,7 +306,7 @@ export const getServerSideProps: GetServerSideProps = async ({
     };
   }
 
-  const locRes = await fetch("http://localhost:8080/admin/locations", {
+  const locRes = await fetch(`${process.env.backend_url}/admin/locations`, {
     method: "GET",
     body: null,
     headers: {

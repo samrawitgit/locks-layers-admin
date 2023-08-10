@@ -55,7 +55,7 @@ function CloseSalon(props) {
       return;
     }
     const closeLocRes = await sendRequest(
-      "http://localhost:8080/admin/close-location",
+      `${process.env.backend_url}/admin/close-location`,
       "POST",
       {
         locationId: location.id_location,
@@ -199,7 +199,7 @@ export const getServerSideProps: GetServerSideProps = async ({
     };
   }
 
-  const locRes = await fetch("http://localhost:8080/admin/locations", {
+  const locRes = await fetch(`${process.env.backend_url}/admin/locations`, {
     method: "GET",
     body: null,
     headers: {

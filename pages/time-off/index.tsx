@@ -162,7 +162,7 @@ function TimeOff(props) {
       end: endShiftValue.format("YYYY-MM-DD HH:mm:ss"),
     });
     const closeLocRes = await sendRequest(
-      "http://localhost:8080/admin/time-off",
+      `${process.env.backend_url}/admin/time-off`,
       "POST",
       {
         staff_id: selectedStaff.id_staff,
@@ -335,7 +335,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
 
-  const response = await fetch("http://localhost:8080/admin/locations", {
+  const response = await fetch(`${process.env.backend_url}/admin/locations`, {
     method: "GET",
     body: null,
     headers: {

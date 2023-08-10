@@ -1,7 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { serialize } from "cookie";
 
-export const AUTH_PROVIDER_BASE_URL = "http://localhost:8080";
 const ONE_HR_IN_MS = 60 * 60 * 1000;
 
 export const AUTHENTICATION_COOKIE_NAME = "SID";
@@ -28,7 +27,7 @@ export default async function handleLogin(
   try {
     // Calls the authentication provider to log in.
     const loginResponse: Response = await fetch(
-      `${AUTH_PROVIDER_BASE_URL}/auth/admin-login`,
+      `${process.env.backend_url}/auth/admin-login`,
       {
         method: "POST",
         body: JSON.stringify(credentials),
