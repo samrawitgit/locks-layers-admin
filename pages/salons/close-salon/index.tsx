@@ -1,6 +1,8 @@
-import React, { useMemo, useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect } from "react";
+import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import Head from "next/head";
+import dayjs, { Dayjs } from "dayjs";
 import {
   FormLabel,
   FormGroup,
@@ -10,13 +12,11 @@ import {
   Button,
   Typography,
 } from "@mui/material";
-import dayjs, { Dayjs } from "dayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { useHttpClient } from "@utils/hooks/httpClient";
-import { PopUpContext } from "@utils/containers/pop-up.container";
-import { GetServerSideProps } from "next";
+
+import { useHttpClient, PopUpContext, withSessionSsr } from "@utils/.";
 
 const TODAY = dayjs();
 
@@ -37,7 +37,7 @@ function CloseSalon(props) {
     if (location && location.city) {
       setSalon(location.city);
     }
-  });
+  }, []);
 
   const [reason, setReason] = useState("");
 
@@ -181,68 +181,74 @@ function CloseSalon(props) {
 
 export default CloseSalon;
 
-export const getServerSideProps: GetServerSideProps = async ({
-  req,
-  query,
-}) => {
-  // Grabs the authentication cookie from the HTTP request
-  const accessToken = req.cookies["SID"];
+interface IGET {
+  isLoggedIn: boolean;
+  location?: any;
+  allLocations?: any;
+  token?: any;
+}
 
-  // Checks if the authentication cookie is set in the request and if it's valid
-  // If it isn't, redirects the user to the login page
-  if (!accessToken) {
-    return {
-      redirect: {
-        destination: "/login",
-        permanent: false,
-      },
-    };
-  }
+export const getServerSideProps: GetServerSideProps = withSessionSsr(
+  async function getServerSideProps({ req, query }) {
+    const user = req.session.user;
 
-  const locRes = await fetch(`${process.env.backend_url}/admin/locations`, {
-    method: "GET",
-    body: null,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-  const locResData = await locRes.json();
-  console.log({ locRes });
-
-  if (locResData && locResData.locations.length) {
-    const selectedLoc = locResData.locations.find(
-      (loc) => loc.id_location.toString() === query.locId
-    );
-    if (selectedLoc) {
-      const parseBh = selectedLoc.business_hours.map((day) => {
-        if (day.opening_time && day.closing_time) {
-          return {
-            ...day,
-            opening_time: day.opening_time.slice(0, 5),
-            closing_time: day.closing_time.slice(0, 5),
-          };
-        }
-        return day;
-      });
-      const location = {
-        ...selectedLoc,
-        business_hours: parseBh,
-      };
-
+    // Checks if the authentication cookie is set in the request and if it's valid
+    // If it isn't, redirects the user to the login page
+    if (!user) {
       return {
-        props: {
-          location,
-          allLocations: locResData.locations,
-          token: accessToken,
-          isLoggedIn: !!accessToken,
+        redirect: {
+          destination: "/login",
+          permanent: false,
         },
       };
     }
-    return {
-      props: { msg: "No selected Location", isLoggedIn: !!accessToken },
-    };
-  } else {
-    return { props: { msg: "No locations data", isLoggedIn: !!accessToken } };
+
+    const locRes = await fetch(`${process.env.backend_url}/admin/locations`, {
+      method: "GET",
+      body: null,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
+    });
+    const locResData = await locRes.json();
+    console.log({ locRes });
+
+    if (locResData && locResData.locations.length) {
+      const selectedLoc = locResData.locations.find(
+        (loc) => loc.id_location.toString() === query.locId
+      );
+      if (selectedLoc) {
+        const parseBh = selectedLoc.business_hours.map((day) => {
+          if (day.opening_time && day.closing_time) {
+            return {
+              ...day,
+              opening_time: day.opening_time.slice(0, 5),
+              closing_time: day.closing_time.slice(0, 5),
+            };
+          }
+          return day;
+        });
+        const location = {
+          ...selectedLoc,
+          business_hours: parseBh,
+        };
+
+        return {
+          props: {
+            location: location,
+            allLocations: locResData.locations,
+            token: user.token,
+            isLoggedIn: !!user,
+          },
+        };
+      }
+    } else {
+      return {
+        props: {
+          isLoggedIn: !!user,
+        },
+      };
+    }
   }
-};
+);

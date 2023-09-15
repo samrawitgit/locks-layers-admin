@@ -1,55 +1,34 @@
-import { useHttpClient } from "@utils/hooks/httpClient";
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 
 const AppContext = React.createContext(null);
 
 function AppStore(props) {
   const { children } = props;
-  const { sendRequest } = useHttpClient();
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [token, setToken] = useState(null);
-  const [user, setUser] = useState(null);
-  // const [error, setError] = useState<
-  //   { title: string; message: string } | boolean
-  // >(false);
 
-  const [locations, setLocations] = useState([]);
-  const [services, setServices] = useState([]);
+  useEffect(() => {
+    const exitingFunction = () => {
+      console.log("exiting...");
+      fetch(`/api/logout`, {
+        method: "GET",
+      }).then((response) => {
+        console.log({ response });
+        if (!response.ok) {
+          throw new Error("Could not logout");
+        }
+        console.log({ response });
+        return response;
+      });
+    };
+    window.addEventListener("beforeunload", exitingFunction);
+    // router.events.on("routeChangeStart", exitingFunction);
+    return () => {
+      console.log("unmounting component...");
+      // router.events.off("routeChangeStart", exitingFunction);
+      window.removeEventListener("beforeunload", exitingFunction);
+    };
+  }, []);
 
-  // useEffect(() => {
-  //   // const token = localStorage.getItem("token");
-  //   // const userId = localStorage.getItem("userId");
-  //   if (token && userId) {
-  //     setToken(token);
-  //     setUser(userId);
-  //     setIsLoggedIn(true);
-  //     // getLocations();
-  //     // getServices();
-  //   }
-  // }, [isLoggedIn]);
-
-  // TODO: redirect -> https://jasonwatmore.com/post/2021/08/30/next-js-redirect-to-login-page-if-unauthenticated
-
-  return (
-    <AppContext.Provider
-      value={{
-        isLoggedIn,
-        setIsLoggedIn,
-        // error,
-        // setError,
-        token,
-        setToken,
-        user,
-        setUser,
-        // SalonData
-        // locations,
-        // services,
-      }}
-    >
-      {/* {isLoggedIn ? children : <Login />} */}
-      {children}
-    </AppContext.Provider>
-  );
+  return <AppContext.Provider value={{}}>{children}</AppContext.Provider>;
 }
 
 export { AppContext, AppStore };

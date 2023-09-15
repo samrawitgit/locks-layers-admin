@@ -1,41 +1,27 @@
 import React, { useContext } from "react";
+import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import dayjs, { Dayjs } from "dayjs";
-import {
-  FormLabel,
-  FormGroup,
-  Autocomplete,
-  TextField,
-  Paper,
-  Button,
-  Divider,
-  FormControl,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-  Stack,
-  Typography,
-} from "@mui/material";
-import {
-  LocalizationProvider,
-  DatePicker,
-  TimePicker,
-} from "@mui/x-date-pickers";
+import FormGroup from "@mui/material/FormGroup";
+import Autocomplete from "@mui/material/Autocomplete";
+import TextField from "@mui/material/TextField";
+import Paper from "@mui/material/Paper";
+import Button from "@mui/material/Button";
+import Divider from "@mui/material/Divider";
+import FormControl from "@mui/material/FormControl";
+import RadioGroup from "@mui/material/RadioGroup";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Radio from "@mui/material/Radio";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import FormLabel from "@mui/material/FormLabel";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { TimePicker } from "@mui/x-date-pickers/TimePicker";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { AppContext, useHttpClient, PopUpContext } from "@utils/index";
-import { GetServerSideProps } from "next";
 
-const locationsOld = ["torino", "milano", "roma"];
-
-const locations_ = [
-  { location: "torino", team: ["Laura1", "Laura2"] },
-  {
-    location: "milano",
-    team: ["Fabio1", "Fabio2", "Fabio3", "Fabio4", "Fabio5"],
-  },
-  { location: "roma", team: ["Giulia1", "Giulia2", "Giulia3", "Giulia4"] },
-];
+import { useHttpClient, PopUpContext, withSessionSsr } from "@utils/.";
 
 const TimeRangeComponent = (props) => {
   const {
@@ -139,8 +125,6 @@ function TimeOff(props) {
 
   const { sendRequest } = useHttpClient();
   const { showPopUp } = useContext(PopUpContext);
-
-  // console.log({ locations, user, token });
 
   const [locationValue, setLocationValue] = React.useState<string | null>(null);
 
@@ -318,45 +302,41 @@ function TimeOff(props) {
 
 export default TimeOff;
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  // Grabs the authentication cookie from the HTTP request
-  const accessToken = context.req.cookies["SID"];
-  const userId = context.req.cookies["UID"];
-  // console.log({ accessToken });
+export const getServerSideProps: GetServerSideProps = withSessionSsr(
+  async function getServerSideProps({ req, query }) {
+    const user = req.session.user;
+    const { token, userId } = user;
 
-  // Checks if the authentication cookie is set in the request and if it's valid
-  // If it isn't, redirects the user to the login page
-  if (!accessToken) {
-    return {
-      redirect: {
-        destination: "/login",
-        permanent: false,
+    if (!token) {
+      return {
+        redirect: {
+          destination: "/login",
+          permanent: false,
+        },
+      };
+    }
+
+    const response = await fetch(`${process.env.backend_url}/admin/locations`, {
+      method: "GET",
+      body: null,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
-    };
-  }
+    });
+    const responseData = await response.json();
 
-  const response = await fetch(`${process.env.backend_url}/admin/locations`, {
-    method: "GET",
-    body: null,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-  const responseData = await response.json();
-  // console.log({ response });
-
-  // Send isLoggedIn for navbar settings
-  if (responseData && responseData.locations.length) {
-    return {
-      props: {
-        locations: responseData.locations,
-        token: accessToken,
-        user: userId,
-        isLoggedIn: !!accessToken,
-      },
-    };
-  } else {
-    return { props: null, isLoggedIn: !!accessToken };
+    if (responseData && responseData.locations.length) {
+      return {
+        props: {
+          locations: responseData.locations,
+          token: token,
+          user: userId,
+          isLoggedIn: !!token,
+        },
+      };
+    } else {
+      return { props: null, isLoggedIn: !!token };
+    }
   }
-};
+);

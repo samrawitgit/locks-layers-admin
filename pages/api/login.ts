@@ -1,28 +1,31 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { serialize } from "cookie";
+import { withIronSessionApiRoute } from "iron-session/next";
 
-const ONE_HR_IN_MS = 60 * 60 * 1000;
+const HALF_HR_IN_MS = 60 * 30 * 1000;
 
-export const AUTHENTICATION_COOKIE_NAME = "SID";
 export const AUTHENTICATION_COOKIE_OPTIONS = {
   sameSite: true,
   httpOnly: true,
-  secure: process.env.NODE_ENV !== "development",
-  maxAge: ONE_HR_IN_MS,
+  // secure: true should be used in production (HTTPS) but can't be used in development (HTTP)
+  secure: process.env.NODE_ENV === "production",
+  maxAge: HALF_HR_IN_MS,
+  overwrite: true,
 };
 
-export default async function handleLogin(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default withIronSessionApiRoute(loginRoute, {
+  cookieName: process.env.authentication_cookie_name,
+  password: process.env.secret_cookie_password,
+  ttl: HALF_HR_IN_MS,
+  cookieOptions: AUTHENTICATION_COOKIE_OPTIONS,
+});
+
+async function loginRoute(req, res) {
   // Makes sure it's a POST request.
   if (req.method !== "POST") {
     return res.status(404).json({ message: "not found" });
   }
 
   // Grab the credentials from the request body.
-  // We could do some payload validation, but in this example, we won't.
-  const credentials = req.body; /* as LoginRequestBody;*/
+  const credentials = req.body;
 
   try {
     // Calls the authentication provider to log in.
@@ -45,15 +48,17 @@ export default async function handleLogin(
     // Reads the access token
     const loginResData = await loginResponse.json();
 
-    const { token, userId } = loginResData; /* as LoginResponseBody;*/
+    const { token, userId } = loginResData;
 
-    // Sets the access token & userId as a cookie into the HTTP response
-    res.setHeader("Set-Cookie", [
-      serialize("SID", token, AUTHENTICATION_COOKIE_OPTIONS),
-      serialize("UID", userId, AUTHENTICATION_COOKIE_OPTIONS),
-    ]);
-
-    return res.status(204).send(null); //200
+    // get user from database then:
+    req.session.user = {
+      token,
+      userId,
+      admin: true,
+      isLoggedIn: true,
+    };
+    await req.session.save();
+    res.send({ ok: true });
   } catch (e) {
     // We could log the error or do something different with it.
     console.log({ e });

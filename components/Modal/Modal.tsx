@@ -1,5 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
-import ReactDOM from "react-dom";
+import React from "react";
 
 // import Button from '@components/Button/Button';
 import "./Modal.module.css";
@@ -18,7 +17,6 @@ const style = {
 };
 
 const modal = (props) => {
-  console.log({ props });
   // const ref = useRef<Element | null>(null)
   // const [mounted, setMounted] = useState(false)
 

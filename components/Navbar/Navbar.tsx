@@ -1,4 +1,6 @@
 import React, { useContext } from "react";
+import { useRouter } from "next/router";
+import Image from "next/image";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 import IconButton from "@mui/material/IconButton";
@@ -7,12 +9,10 @@ import Menu from "@mui/material/Menu";
 import MenuIcon from "@mui/icons-material/Menu";
 import Container from "@mui/material/Container";
 import Button from "@mui/material/Button";
-import Image from "next/image";
-import { useRouter } from "next/router";
 
-import NextLinkComposed from "../../components/NextLink/NextLink";
+import NextLinkComposed from "@components/NextLink/NextLink";
 import StyledNavbar from "./StyledNavbar";
-import { PopUpContext } from "@utils/index";
+import { PopUpContext } from "@utils/.";
 
 export const logoutFn = async (): Promise<any> => {
   const response = await fetch(`/api/logout`, {
@@ -30,7 +30,6 @@ const pages = [
   { title: "Salons", route: "/salons" },
   { title: "Staff", route: "/time-off" },
 ];
-const settings = ["Profile", "Account", "Dashboard", "Logout"];
 
 function Navbar(props) {
   const router = useRouter();
@@ -49,19 +48,13 @@ function Navbar(props) {
   };
 
   const logout = async () => {
-    // localStorage.removeItem("token");
-    // localStorage.removeItem("expiryDate");
-    // localStorage.removeItem("userId");
     try {
       const res = await logoutFn();
       console.log({ res });
-      // setIsLoggedIn(false);
       router.push("/login");
     } catch (err) {
       console.log({ err });
       showPopUp({ title: "Logout failed", content: "try again" });
-    } finally {
-      // setIsLoading(false);
     }
   };
 

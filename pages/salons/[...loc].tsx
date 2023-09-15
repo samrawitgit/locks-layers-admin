@@ -1,10 +1,8 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/router";
-import { styled } from "@mui/material/styles";
+import React, { useMemo } from "react";
+import { GetServerSideProps } from "next";
 import {
   Grid,
   Typography,
-  Paper,
   Button,
   Card,
   CardHeader,
@@ -23,74 +21,8 @@ import ContentCutOutlinedIcon from "@mui/icons-material/ContentCutOutlined";
 import PaletteOutlinedIcon from "@mui/icons-material/PaletteOutlined";
 import AirOutlinedIcon from "@mui/icons-material/AirOutlined";
 
-import NextLinkComposed from "../../components/NextLink/NextLink";
-import { GetServerSideProps } from "next";
-
-const commonData = {
-  openingTime: "9",
-  closingTime: "18",
-  services: [
-    {
-      id: "trim",
-      duration: "00:30:00",
-      icon: (
-        <ContentCutOutlinedIcon
-          sx={{ marginRight: "15px", marginBottom: "-7px" }}
-        />
-      ),
-    },
-    {
-      id: "perm",
-      duration: "01:00:00",
-      icon: (
-        <PaletteOutlinedIcon
-          sx={{ marginRight: "15px", marginBottom: "-7px" }}
-        />
-      ),
-    },
-    {
-      id: "dye",
-      duration: "01:30:00",
-      icon: (
-        <AirOutlinedIcon sx={{ marginRight: "15px", marginBottom: "-7px" }} />
-      ),
-    },
-  ],
-};
-
-const salonData = [
-  {
-    location: "torino",
-    address: "Corso Vittorio Emanuele II, 98, 10121",
-    startWeekDay: "tuesday",
-    endWeekDay: "saturday",
-    staffMembers: ["Laura1", "Laura2"],
-  },
-  {
-    location: "milano",
-    address: "Via Adda, 5, 20124",
-    startWeekDay: "tuesday",
-    endWeekDay: "sunday",
-    staffMembers: ["Fabio1", "Fabio2", "Fabio3", "Fabio4", "Fabio5"],
-  },
-  {
-    location: "roma",
-    address: "Via Dandolo, 25, 00153",
-    startWeekDay: "tuesday",
-    endWeekDay: "saturday",
-    staffMembers: ["Giulia1", "Giulia2", "Giulia3", "Giulia4"],
-  },
-];
-
-const Item = styled(Paper)(({ theme }) => ({
-  backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
-  ...theme.typography.body2,
-  padding: theme.spacing(2),
-  textAlign: "center",
-  color: theme.palette.text.secondary,
-}));
-
-//TODO: fix height changing when sandwich menu is open
+import NextLinkComposed from "@components/NextLink/NextLink";
+import { withSessionSsr } from "@utils/.";
 
 interface ILocation {
   road: string;
@@ -105,7 +37,6 @@ interface ILocation {
 
 const LocationDetails = (props) => {
   const { location, services } = props;
-  console.log({ location, services });
 
   const services_ = useMemo(() => {
     if (!services) return;
@@ -288,77 +219,72 @@ const LocationDetails = (props) => {
 
 export default LocationDetails;
 
-export const getServerSideProps: GetServerSideProps = async ({
-  req,
-  query,
-}) => {
-  // Grabs the authentication cookie from the HTTP request
-  const accessToken = req.cookies["SID"];
+export const getServerSideProps: GetServerSideProps = withSessionSsr(
+  async function getServerSideProps({ req, query }) {
+    const user = req.session.user;
 
-  // Checks if the authentication cookie is set in the request and if it's valid
-  // If it isn't, redirects the user to the login page
-  if (!accessToken) {
-    return {
-      redirect: {
-        destination: "/login",
-        permanent: false,
+    if (!user) {
+      return {
+        redirect: {
+          destination: "/login",
+          permanent: false,
+        },
+      };
+    }
+
+    const locRes = await fetch(`${process.env.backend_url}/admin/locations`, {
+      method: "GET",
+      body: null,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
       },
-    };
-  }
+    });
+    const locResData = await locRes.json();
 
-  const locRes = await fetch(`${process.env.backend_url}/admin/locations`, {
-    method: "GET",
-    body: null,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-  const locResData = await locRes.json();
-  // console.log({ locRes });
+    if (locResData && locResData.locations.length) {
+      const selectedLoc = locResData.locations.find(
+        (loc) => loc.id_location.toString() === query.locId
+      );
+      if (selectedLoc) {
+        const parseBh = selectedLoc.business_hours.map((day) => {
+          if (day.opening_time && day.closing_time) {
+            return {
+              ...day,
+              opening_time: day.opening_time.slice(0, 5),
+              closing_time: day.closing_time.slice(0, 5),
+            };
+          }
+          return day;
+        });
+        const location = {
+          ...selectedLoc,
+          business_hours: parseBh,
+        };
 
-  if (locResData && locResData.locations.length) {
-    const selectedLoc = locResData.locations.find(
-      (loc) => loc.id_location.toString() === query.locId
-    );
-    if (selectedLoc) {
-      const parseBh = selectedLoc.business_hours.map((day) => {
-        if (day.opening_time && day.closing_time) {
+        const servRes = await fetch("http://localhost:8080/admin/services", {
+          method: "GET",
+          body: null,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${user.token}`,
+          },
+        });
+        const servResData = await servRes.json();
+
+        if (servResData && servResData.services.length) {
           return {
-            ...day,
-            opening_time: day.opening_time.slice(0, 5),
-            closing_time: day.closing_time.slice(0, 5),
+            props: {
+              location,
+              services: servResData.services,
+              isLoggedIn: !!user,
+            },
           };
         }
-        return day;
-      });
-      const location = {
-        ...selectedLoc,
-        business_hours: parseBh,
-      };
-
-      const servRes = await fetch("http://localhost:8080/admin/services", {
-        method: "GET",
-        body: null,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      const servResData = await servRes.json();
-
-      if (servResData && servResData.services.length) {
-        return {
-          props: {
-            location,
-            services: servResData.services,
-            isLoggedIn: !!accessToken,
-          },
-        };
       }
+      return { props: { location: null, services: [], isLoggedIn: !!user } };
+    } else {
+      return { props: { location: null, services: [], isLoggedIn: !!user } };
     }
-    return { props: { isLoggedIn: !!accessToken } };
-  } else {
-    return { props: { isLoggedIn: !!accessToken } };
   }
-};
+);

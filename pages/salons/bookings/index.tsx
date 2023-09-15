@@ -1,13 +1,6 @@
-import React, { useState, useContext, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
+import { GetServerSideProps } from "next";
 import Head from "next/head";
-import {
-  DateCalendar,
-  DayCalendarSkeleton,
-  LocalizationProvider,
-  PickersDay,
-  PickersDayProps,
-} from "@mui/x-date-pickers";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
 import _reduce from "lodash/reduce";
 import _uniq from "lodash/uniq";
@@ -22,10 +15,17 @@ import {
   AccordionDetails,
   Container,
 } from "@mui/material";
+import {
+  DateCalendar,
+  DayCalendarSkeleton,
+  LocalizationProvider,
+  PickersDay,
+  PickersDayProps,
+} from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-import { useRouter } from "next/router";
-import { GetServerSideProps } from "next";
+import { withSessionSsr } from "@utils/.";
 
 const TODAY = dayjs();
 
@@ -120,8 +120,6 @@ function ServerDay(
 
 function Bookings(props) {
   const { calendarData } = props;
-  console.log({ calendarData });
-  const router = useRouter();
 
   const [isLoading, setIsLoading] = useState(true);
   const [highlightedDays, setHighlightedDays] = useState([]);
@@ -151,7 +149,6 @@ function Bookings(props) {
 
   const fetchHighlightedDays = React.useCallback(
     (newMonth: string, bookingData = calendar) => {
-      // console.log({ bookingData });
       setIsLoading(true);
       if (!_isEmpty(bookingData) && bookingData[newMonth]) {
         const highDays = _uniq(
@@ -276,48 +273,45 @@ function Bookings(props) {
 
 export default Bookings;
 
-// Handle token in request cookie to authorize server side GET requests
+export const getServerSideProps: GetServerSideProps = withSessionSsr(
+  async function getServerSideProps({ req, query }) {
+    const user = req.session.user;
 
-export const getServerSideProps: GetServerSideProps = async ({
-  req,
-  query,
-}) => {
-  // Grabs the authentication cookie from the HTTP request
-  const accessToken = req.cookies["SID"];
-
-  // Checks if the authentication cookie is set in the request and if it's valid
-  // If it isn't, redirects the user to the login page
-  if (!accessToken) {
-    return {
-      redirect: {
-        destination: "/login",
-        permanent: false,
-      },
-    };
-  }
-
-  const calendarRes = await fetch(
-    `http://localhost:8080/bookings/calendar?locationId=${query.locId}`,
-    {
-      method: "GET",
-      body: null,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
+    if (!user) {
+      return {
+        redirect: {
+          destination: "/login",
+          permanent: false,
+        },
+      };
     }
-  );
-  // console.log({ calendarRes, accessToken });
-  const calendarResData = await calendarRes.json();
-  if (calendarResData && calendarResData.bookingData) {
-    console.log({ book: calendarResData.bookingData });
-    return {
-      props: {
-        calendarData: calendarResData.bookingData,
-        isLoggedIn: !!accessToken,
-      },
-    };
-  } else {
-    return { props: { msg: "No locations data", isLoggedIn: !!accessToken } };
+
+    const calendarRes = await fetch(
+      `http://localhost:8080/bookings/calendar?locationId=${query.locId}`,
+      {
+        method: "GET",
+        body: null,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+      }
+    );
+
+    const calendarResData = await calendarRes.json();
+    if (calendarResData && calendarResData.bookingData) {
+      return {
+        props: {
+          calendarData: calendarResData.bookingData,
+          isLoggedIn: !!user,
+        },
+      };
+    } else {
+      return {
+        props: {
+          isLoggedIn: !!user,
+        },
+      };
+    }
   }
-};
+);

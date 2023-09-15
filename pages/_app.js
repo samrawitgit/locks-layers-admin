@@ -1,5 +1,4 @@
-import { Component, useContext } from "react";
-import App from "next/app";
+import { Component } from "react";
 
 import { AppStore } from "@utils/containers/app.container";
 import { PopUpContainer } from "@utils/containers/pop-up.container";
@@ -56,13 +55,7 @@ function MyApp({ Component, pageProps }) {
       <PopUpContainer>
         <Layout {...pageProps}>
           <ErrorBoundary>
-            {/* <ErrorComponent /> */}
-            {/*error={this.state.error} onHandle={this.errorHandler}*/}
-            {/* <SessionProvider session={session}> */}
-            {/* <RouteGuard> */}
             <Component {...pageProps} />
-            {/* </RouteGuard> */}
-            {/* </SessionProvider> */}
           </ErrorBoundary>
         </Layout>
       </PopUpContainer>

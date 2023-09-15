@@ -1,4 +1,5 @@
-import React, { useContext } from "react";
+import React from "react";
+import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
@@ -10,7 +11,7 @@ import {
   ImageMarked,
   ImageSrc,
 } from "../../public/css/StyledSalon";
-import { GetServerSideProps } from "next";
+import { withSessionSsr } from "@utils/.";
 
 const ButtonBases = (props) => {
   const { locationData } = props;
@@ -20,7 +21,6 @@ const ButtonBases = (props) => {
     router.push({ pathname: `/salons/${city}`, query: { locId: id_location } });
   };
 
-  // console.log({ locationData });
   return (
     <ImageButton
       onClick={onClick}
@@ -54,7 +54,6 @@ const ButtonBases = (props) => {
 
 function Salons(props) {
   const { locations } = props;
-  console.log({ locations });
 
   if (!locations) {
     return <Typography>No data available</Typography>;
@@ -80,39 +79,39 @@ function Salons(props) {
 
 export default Salons;
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  // Grabs the authentication cookie from the HTTP request
-  const accessToken = context.req.cookies["SID"];
-  // console.log({ accessToken });
+export const getServerSideProps: GetServerSideProps = withSessionSsr(
+  async function getServerSideProps({ req }) {
+    const user = req.session.user;
 
-  // Checks if the authentication cookie is set in the request and if it's valid
-  // If it isn't, redirects the user to the login page
-  if (!accessToken) {
-    return {
-      redirect: {
-        destination: "/login",
-        permanent: false,
+    if (!user) {
+      return {
+        redirect: {
+          destination: "/login",
+          permanent: false,
+        },
+      };
+    }
+
+    const response = await fetch(`${process.env.backend_url}/admin/locations`, {
+      method: "GET",
+      body: null,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
       },
-    };
-  }
+    });
+    const responseData = await response.json();
 
-  const response = await fetch(`${process.env.backend_url}/admin/locations`, {
-    method: "GET",
-    body: null,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-  const responseData = await response.json();
-  // console.log({ response });
-
-  // Send isLoggedIn for navbar settings
-  if (responseData && responseData.locations.length) {
-    return {
-      props: { locations: responseData.locations, isLoggedIn: !!accessToken },
-    };
-  } else {
-    return { props: null, isLoggedIn: !!accessToken };
+    if (
+      responseData &&
+      responseData.locations &&
+      responseData.locations.length
+    ) {
+      return {
+        props: { locations: responseData.locations, isLoggedIn: !!user },
+      };
+    } else {
+      return { props: { isLoggedIn: !!user, locations: [] } };
+    }
   }
-};
+);

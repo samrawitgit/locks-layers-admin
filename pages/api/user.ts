@@ -2,9 +2,8 @@ import { withIronSessionApiRoute } from "iron-session/next";
 import { AUTHENTICATION_COOKIE_OPTIONS } from "./login";
 
 export default withIronSessionApiRoute(
-  function logoutRoute(req, res) {
-    req.session.destroy();
-    res.send({ ok: true });
+  function userRoute(req, res) {
+    res.send({ user: req.session.user });
   },
   {
     cookieName: process.env.authentication_cookie_name,

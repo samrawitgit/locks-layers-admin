@@ -1,12 +1,11 @@
-import React, { useContext } from "react";
-import { AppContext } from "@utils/containers/app.container";
+import React from "react";
 import Head from "next/head";
 import { Paper, Typography, Box, Button } from "@mui/material";
+
 import NextLinkComposed from "@components/NextLink/NextLink";
-import { GetServerSideProps } from "next";
+import { withSessionSsr } from "@utils/.";
 
 function HomePage(props) {
-  // console.log({ props });
   return (
     <div
       style={{
@@ -62,45 +61,25 @@ function HomePage(props) {
 
 export default HomePage;
 
-// export async function getServerSideProps(context) {
-//   const session = await getSession({ req: context.req });
-//   // const token = localStorage()
-//   console.log({ session });
-//   if (!session) {
-//     return {
-//       redirect: {
-//         destination: "/login",
-//         permanent: false, // it's only for this time not forerver
-//       },
-//     };
-//   }
+export const getServerSideProps = withSessionSsr(
+  async function getServerSideProps({ req }) {
+    // Grabs the authentication cookie from the session
+    const user = req.session.user;
 
-//   return {
-//     props: { session },
-//   };
-// }
+    // Checks if the authentication cookie is set in the request and if it's valid
+    // If it isn't, redirects the user to the login page
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  // Grabs the authentication cookie from the HTTP request
-  const accessToken = context.req.cookies["SID"];
-  // console.log({ accessToken });
+    if (!user) {
+      return {
+        redirect: {
+          destination: "/login",
+          permanent: false,
+        },
+      };
+    }
 
-  // Checks if the authentication cookie is set in the request and if it's valid
-
-  // If it isn't, redirects the user to the login page
-  if (!accessToken) {
     return {
-      redirect: {
-        destination: "/login",
-        permanent: false,
-      },
+      props: { user: user, isLoggedIn: true },
     };
   }
-
-  // In this example, we don't need the access token for anything on the client's side.
-  // If we did, we could either pass the access token to the client via props
-  // or we could decode the token, extract the data we need, and pass this data via props.
-  return {
-    props: { isLoggedIn: true },
-  };
-};
+);

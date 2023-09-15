@@ -1,54 +1,19 @@
 import { NextResponse } from "next/server";
-import { NextRequest } from "next/server";
-import { parse } from "cookie";
+import type { NextRequest } from "next/server";
 
-// EXAMPLE   https://www.streaver.com/blog/posts/implementing-the-authentication-layer-in-nextjs
+export const middleware = async (req: NextRequest) => {
+  const res = NextResponse.next();
 
-export function middleware(request: NextRequest) {
-  // You can also set request headers in NextResponse.rewrite
+  return res;
+};
 
-  const tokenCookie = request.cookies.get("SID");
-  const userIdCookie = request.cookies.get("UID");
-
-  const response = NextResponse.next();
-
-  if (request.nextUrl.pathname === "/api/logout") {
-    response.cookies.delete("SID");
-    response.cookies.delete("UID");
-    request.cookies.delete("SID");
-    request.cookies.delete("UID");
-
-    return response;
-  } else {
-    console.log({
-      hasCook: !!request.headers.get("cookie"),
-      hasSID: request.headers.get("cookie").includes("SID"),
-      hasUID: request.headers.get("cookie").includes("UID"),
-      hasCookSID: request.cookies.has("SID"),
-      hasCookUID: request.cookies.has("UID"),
-    });
-    if (
-      !!request.headers.get("cookie") &&
-      request.headers.get("cookie").includes("SID") &&
-      request.headers.get("cookie").includes("UID")
-    ) {
-      const headerCookies = parse(request.headers.get("cookie"));
-      const tokenCookieH = headerCookies.SID;
-      const userIdCookieH = headerCookies.UID;
-      console.log("headersCook", { tokenCookieH, userIdCookieH });
-
-      response.cookies.set({ ...tokenCookieH });
-      response.cookies.set({ ...userIdCookieH });
-    }
-
-    response.cookies.set({ ...tokenCookie });
-    response.cookies.set({ ...userIdCookie });
-
-    return response;
-  }
-}
-
-// export const config = {
-//   // matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
-//   matcher: ["/api/((?!login).*)"],
-// };
+/*
+https://nextjs.org/docs/pages/building-your-application/routing/authenticating
+https://github.com/nextauthjs/next-auth-example
+https://github.com/vercel/next.js/tree/canary/examples/with-iron-session
+https://github.com/vvo/iron-session#nextjs-usage
+https://github.com/vvo/iron-session/blob/main/examples/next.js-typescript/pages/login.tsx
+https://github.com/vvo/iron-session/blob/main/src/core.ts
+https://github.com/jshttp/cookie#options-1
+https://swr.vercel.app/docs/mutation.en-US
+*/
